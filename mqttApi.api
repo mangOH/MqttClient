@@ -5,7 +5,6 @@
 //--------------------------------------------------------------------------------------------------
 FUNCTION ViewConfig
 (
-
 );
 
 //--------------------------------------------------------------------------------------------------
@@ -15,10 +14,10 @@ FUNCTION ViewConfig
 //--------------------------------------------------------------------------------------------------
 FUNCTION Config
 (
-    string 		szBrokerUrl[256] IN,
-    int32 		n32PortNumber IN,
-    int32 		n32KeepAlive IN,
-    int32 		n32QoS IN
+    string      szBrokerUrl[256] IN,
+    int32       n32PortNumber IN,
+    int32       n32KeepAlive IN,
+    int32       n32QoS IN
 );
 
 //--------------------------------------------------------------------------------------------------
@@ -28,8 +27,8 @@ FUNCTION Config
 //--------------------------------------------------------------------------------------------------
 FUNCTION Connect
 (
-	string		szUser[32] IN,
-	string		szPassword[32] IN
+    string      szUser[32] IN,
+    string      szPassword[32] IN
 );
 
 //--------------------------------------------------------------------------------------------------
@@ -39,7 +38,6 @@ FUNCTION Connect
 //--------------------------------------------------------------------------------------------------
 FUNCTION Disconnect
 (
-
 );
 
 //--------------------------------------------------------------------------------------------------
@@ -49,9 +47,9 @@ FUNCTION Disconnect
 //--------------------------------------------------------------------------------------------------
 FUNCTION Send
 (
-    string 		szKey[128]     IN,
-    string 		szValue[128]   IN,
-    int32               errCode        OUT
+    string      szKey[128]     IN,
+    string      szValue[128]   IN,
+    int32       errCode        OUT
 );
 
 //--------------------------------------------------------------------------------------------------
@@ -61,9 +59,9 @@ FUNCTION Send
 //--------------------------------------------------------------------------------------------------
 HANDLER SessionStateHandler
 (
-    bool 	bIsConnected IN,       ///< Session State: connected or disconnected
-    int32	nConnectErrorCode IN,  ///< connection returned code
-    int32	nSebErrorCode 			///< subscribe returned code
+    bool    bIsConnected IN,       ///< Session State: connected or disconnected
+    int32   nConnectErrorCode IN,  ///< connection returned code
+    int32   nSebErrorCode          ///< subscribe returned code
 );
 
 //--------------------------------------------------------------------------------------------------
@@ -83,10 +81,10 @@ EVENT SessionState
 //--------------------------------------------------------------------------------------------------
 HANDLER IncomingMessageHandler
 (
-    string sTopicName[128] IN,  ///< Name of the subscribed topic
-    string sKey[128] IN,  ///< Key Name of the data
-    string sValue[128] IN,  ///< Value of the data
-    string sTimestamp[16] IN  ///< Timestamp of the data
+    string sTopicName[128] IN, ///< Name of the subscribed topic
+    string sKey[128] IN,       ///< Key Name of the data
+    string sValue[128] IN,     ///< Value of the data
+    string sTimestamp[16] IN   ///< Timestamp of the data
 );
 
 //--------------------------------------------------------------------------------------------------
@@ -98,3 +96,4 @@ EVENT IncomingMessage
 (
     handler IncomingMessageHandler
 );
+

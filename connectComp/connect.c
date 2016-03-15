@@ -75,7 +75,7 @@ COMPONENT_INIT
     //int         nCount = 0;
     //char        szUser[32] = {0};
     //char        szPassword[32] = {0};
-    
+
 
     #if 1
     //temporary fix, as le_arg_GetStringOption is broken

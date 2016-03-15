@@ -73,7 +73,7 @@ COMPONENT_INIT
     }
     else
     {
-        
+
         int32_t     nPortNumber = -1;
         int32_t     nKeepAlive = -1;
         int32_t     nQoS = -1;
@@ -88,7 +88,7 @@ COMPONENT_INIT
         le_arg_SetStringCallback(handler_CaptureHost, "b", "broker");
 
         le_arg_SetFlagCallback(PrintUsage, "h", "help");
-        
+
         le_arg_SetIntVar(&nPort, "p", "port");
         le_arg_SetIntVar(&nka, "k", "keepalive");
         le_arg_SetIntVar(&nQ, "q", "qos");

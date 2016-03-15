@@ -174,7 +174,7 @@ static void DisconnectData
         LE_ERROR("Not existing data connection reference.");
         return;
     }
-    
+
     if (g_stContext.oMqttClient.isconnected)
     {
         LE_INFO("Dispose MQTT resources.");
@@ -250,7 +250,7 @@ static int SendMessage
     {
         free(szPayload);
     }
-    
+
     return rc;
 }
 
@@ -282,7 +282,7 @@ static void timerHandler
         LE_INFO("No active MQTT session, now stop Timer");
         le_timer_Stop(timerRef);
     }
-    
+
 }
 
 static int publishAckCmd(const char* szUid, int nAck, char* szMessage)
@@ -492,10 +492,10 @@ static int InitMqtt
     NewNetwork(&g_stContext.oNetwork);
     ConnectNetwork(&g_stContext.oNetwork, g_stContext.szBrokerUrl, g_stContext.u32PortNumber);
     MQTTClient(&g_stContext.oMqttClient, &g_stContext.oNetwork, TIMEOUT_MS, g_buf, sizeof(g_buf), g_readbuf, sizeof(g_readbuf));
- 
+
     LE_INFO("Connecting to connect to tcp://%s:%d\n", g_stContext.szBrokerUrl, g_stContext.u32PortNumber);
 
-    MQTTPacket_connectData data = MQTTPacket_connectData_initializer;       
+    MQTTPacket_connectData data = MQTTPacket_connectData_initializer;
     data.willFlag = 0;
     data.MQTTVersion = MQTT_VERSION;
 
@@ -509,7 +509,7 @@ static int InitMqtt
 
     data.keepAliveInterval = g_stContext.u32KeepAlive;
     data.cleansession = 1;
-    
+
     rc = MQTTConnect(&g_stContext.oMqttClient, &data);
 
     LE_INFO("MQTT connection status= %d\n", rc);
@@ -518,12 +518,12 @@ static int InitMqtt
         LE_INFO("MQTT connected");
     }
 
-    if (rc == SUCCESS) 
+    if (rc == SUCCESS)
     {
         //connected
         LE_INFO("MQTT connected...");
 
-        
+
         LE_INFO("Subscribing to %s\n", g_stContext.szSubscribeTopic);
         rc = MQTTSubscribe(&g_stContext.oMqttClient, g_stContext.szSubscribeTopic, 0, onIncomingMessage);
         LE_INFO("Subscription return code: %d\n", rc);
@@ -611,7 +611,7 @@ static void DcsStateHandler
             #endif
 
             LE_INFO("%s connected! Starting MQTT session", intfName);
-            
+
             if (InitMqtt())
             {
                 DisconnectData();
@@ -655,7 +655,7 @@ static void Config
     {
         PrintMessage("Previous MQTT Broker URL was: %s", g_stContext.szBrokerUrl);
         strcpy(g_stContext.szBrokerUrl, szBrokerUrl);
-        PrintMessage("New MQTT Broker URL is now: %s", g_stContext.szBrokerUrl); 
+        PrintMessage("New MQTT Broker URL is now: %s", g_stContext.szBrokerUrl);
     }
 
     if (n32PortNumber != -1)
@@ -670,14 +670,14 @@ static void Config
         PrintMessage("Previous Keep Alive was: %lu seconds", (long unsigned int) g_stContext.u32KeepAlive);
         g_stContext.u32KeepAlive = n32KeepAlive;
         PrintMessage("New Keep Alive is now: %lu seconds", (long unsigned int) g_stContext.u32KeepAlive);
-    } 
+    }
 
     if (n32QoS != -1)
     {
         PrintMessage("Previous QoS was: %lu", (long unsigned int) g_stContext.u32QoS);
         g_stContext.u32QoS = n32QoS;
         PrintMessage("New QoS is now: %lu", (long unsigned int) g_stContext.u32QoS);
-    } 
+    }
 
     PrintMessage("New settings will be applied at the next connection");
 }
@@ -698,7 +698,7 @@ void Connect
     if (g_eState == IDLE)
     {
         LE_INFO("Idle, call Connect()");
-        
+
         if (strlen(szUser) > 0)
         {
             strcpy(g_stContext.szDeviceId, szUser);
@@ -720,7 +720,7 @@ void Connect
     }
     else
     {
-        
+
         LE_INFO("Already Connecting, try later");
         SendMqttConnStateEvent(false, 1, -1);
     }
@@ -803,7 +803,7 @@ static void FirstLayerSessionStateHandler
     MqttConnStateData_t* eventDataPtr = reportPtr;
     mqttApi_SessionStateHandlerFunc_t clientHandlerFunc = secondLayerHandlerFunc;
 
-    clientHandlerFunc(        
+    clientHandlerFunc(
                       eventDataPtr->bIsConnected,
                       eventDataPtr->nConnectErrorCode,
                       eventDataPtr->nSubErrorCode,
@@ -866,7 +866,7 @@ static void FirstLayerIncomingMessageHandler
     MqttInMsgData_t*                        eventDataPtr = reportPtr;
     mqttApi_IncomingMessageHandlerFunc_t    clientHandlerFunc = secondLayerHandlerFunc;
 
-    clientHandlerFunc(        
+    clientHandlerFunc(
                       eventDataPtr->szTopicName,
                       eventDataPtr->szKeyName,
                       eventDataPtr->szValue,

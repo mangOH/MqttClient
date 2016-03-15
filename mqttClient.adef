@@ -1,3 +1,4 @@
+version: 1.0
 sandboxed: false
 
 executables:
@@ -10,7 +11,7 @@ executables:
     //receiver    = ( receiverComp )
 }
 
-processes: 
+processes:
 {
     envVars:
     {
@@ -46,4 +47,3 @@ provides:
     }
 }
 
-version: 1.0

@@ -11,7 +11,7 @@
  *      Set the targeted platform in "swir_platform_def.h"
  *
  * Requirements:
- *      Paho's Embedded MQTTClient C client shall be installed within Arduino's IDE or mbed's online compiler 
+ *      Paho's Embedded MQTTClient C client shall be installed within Arduino's IDE or mbed's online compiler
  *      HL module shall be inserted into the "HL shield", stacked over Arduino Mega2560 or STNuleo L053R8 (tested)
  *      HL Shiled's Pin 0 (RX) & Pin 1 (TX) are physically linked to HL module's UART using jumpers J6 & J8 (HL Shield)
  *      SIM card inserted into slot 1 & Antenna connected
@@ -129,7 +129,7 @@ DigitalIn                       _pirState(PIR_PIN);                     //variab
 #define PUBLISH_DATA_NAME       "home.intrusion"                        //Name of the data being published to AirVantage
 #undef  INCOMING_DATA_NAME
 #define INCOMING_DATA_NAME      "home.TurnOn.Alarm"                     //default incoming data key
-    
+
 //--- Alarm app Global variables
 int                             _nIsAlarmOn = 0;                        //Alarm status (on/off)
 
@@ -180,14 +180,14 @@ void loop()
             {
                 _mqttClient.subscribe(messageArrived);                  //if connected, then provided the callback to receive mqtt msg from AirVantage
             }
-        }        
+        }
         DELAY_MS(DELAY_TRY_CONNECTION);                                 //if not connected, let's retry in DELAY_TRY_CONNECTION (ms)
     }
     else
     {
         int nRSSI, nBER, nEcLo;
                                                                         //retrieving RSSI (Received Signal Strength Indication)
-        if (_mqttClient.getSignalQuality(nRSSI, nBER, nEcLo)) 
+        if (_mqttClient.getSignalQuality(nRSSI, nBER, nEcLo))
         {
             if (nEcLo == -99)
             {
@@ -201,7 +201,7 @@ void loop()
         _mqttClient.loop();                                             //Must be called. Enable SWIR_MQTTClient to handle background tasks
 
         doCustomLoopTask();                                             //let's perform this task on a regular basis
-        
+
         DELAY_MS(DELAY_DO_TASK);                                        //let's do this again in DELAY_DO_TASK (ms)
     }
 }
@@ -252,7 +252,7 @@ void doCustomLoopTask()
     }
 #else
     unsigned long ulElapsedSeconds = 0;
-    
+
     #ifdef TARGET_MBED
     ulElapsedSeconds = time(NULL);
     #endif
@@ -269,7 +269,7 @@ void doCustomLoopTask()
 int messageArrived(const char* szKey, const char* szValue, const char* szTimestamp)
 {
     SWIR_TRACE(F("\r\n>>> Message from AirVantage: %s = %s @ %s\r\n"), szKey, szValue, szTimestamp);
-    
+
     //based on szKey and szValue (depending on Application Model defined in AirVantage), you can trigger an action...
 
     STRING_CLASS sKey = STRING_CLASS(szKey);
@@ -303,10 +303,10 @@ int messageArrived(const char* szKey, const char* szValue, const char* szTimesta
             postData(PUBLISH_DATA_NAME, 0);
             #endif
         }
-        
+
         return 0;
     }
-    
+
     return 1;   //unknown key
 }
 
@@ -314,7 +314,7 @@ int messageArrived(const char* szKey, const char* szValue, const char* szTimesta
 int main()
 {
     setup();
-    
+
     while (1)
     {
         loop();

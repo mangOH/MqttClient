@@ -70,8 +70,8 @@ struct Client {
     unsigned int next_packetid;
     unsigned int command_timeout_ms;
     size_t buf_size, readbuf_size;
-    unsigned char *buf;  
-    unsigned char *readbuf; 
+    unsigned char *buf;
+    unsigned char *readbuf;
     unsigned int keepAliveInterval;
     char ping_outstanding;
     int isconnected;
@@ -81,9 +81,9 @@ struct Client {
         const char* topicFilter;
         void (*fp) (MessageData*);
     } messageHandlers[MAX_MESSAGE_HANDLERS];      // Message handlers are indexed by subscription topic
-    
+
     void (*defaultMessageHandler) (MessageData*);
-    
+
     Network* ipstack;
     Timer ping_timer;
 };

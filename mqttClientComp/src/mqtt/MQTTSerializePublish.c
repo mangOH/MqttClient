@@ -23,7 +23,7 @@
 /**
   * Determines the length of the MQTT publish packet that would be produced using the supplied parameters
   * @param qos the MQTT QoS of the publish (packetid is omitted for QoS 0)
-  * @param topicName the topic name to be used in the publish  
+  * @param topicName the topic name to be used in the publish
   * @param payloadlen the length of the payload to be sent
   * @return the length of buffer needed to contain the serialized version of the packet
   */

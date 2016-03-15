@@ -7,7 +7,7 @@
  *  Created on: June 2015
  *      Author: Nhon Chu
  */
- 
+
 #ifndef _SWIR_JSON_H_
 #define _SWIR_JSON_H_
 

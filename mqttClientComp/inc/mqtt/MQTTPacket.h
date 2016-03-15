@@ -30,7 +30,7 @@ extern "C" {
   #define DLLExport  __attribute__ ((visibility ("default")))
 #else
   #define DLLImport
-  #define DLLExport  
+  #define DLLExport
 #endif
 
 enum errors
