@@ -56,7 +56,7 @@ COMPONENT_INIT
     {
         LE_INFO("Calling mqttClient to publish message");
         int32_t     nErrCode = 0;
-        mqttApi_Send(le_arg_GetArg(0), le_arg_GetArg(1), &nErrCode);
+        mqtt_Send(le_arg_GetArg(0), le_arg_GetArg(1), &nErrCode);
 
         if (nErrCode == 0)
         {

@@ -29,6 +29,6 @@ provides:
 {
     api:
     {
-        mqttApi.api
+        mqtt.api
     }
 }

@@ -24,7 +24,7 @@
 COMPONENT_INIT
 {
     LE_INFO("Calling mqttClient to close MQTT session");
-    mqttApi_Disconnect();
+    mqtt_Disconnect();
 
     exit(EXIT_SUCCESS);
 }

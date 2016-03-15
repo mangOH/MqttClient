@@ -67,7 +67,7 @@ COMPONENT_INIT
     if (le_arg_NumArgs() == 0)
     {
         LE_INFO("Calling mqttClient to view MQTT settings");
-        mqttApi_ViewConfig();
+        mqtt_ViewConfig();
 
         exit(EXIT_SUCCESS);
     }
@@ -99,7 +99,7 @@ COMPONENT_INIT
         nKeepAlive = nka;
         nQoS = nQ;
 
-        mqttApi_Config(szBrokerUrl, nPortNumber, nKeepAlive, nQoS);
+        mqtt_Config(szBrokerUrl, nPortNumber, nKeepAlive, nQoS);
 
         exit(EXIT_SUCCESS);
 
@@ -136,7 +136,7 @@ COMPONENT_INIT
 
         if (nCount > 0)
         {
-            mqttApi_Config(szBrokerUrl, nPortNumber, nKeepAlive, nQoS);
+            mqtt_Config(szBrokerUrl, nPortNumber, nKeepAlive, nQoS);
 
             exit(EXIT_SUCCESS);
         }

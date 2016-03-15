@@ -738,7 +738,7 @@ void Disconnect
 // APIs.
 //--------------------------------------------------------------------------------------------------
 
-void mqttApi_ViewConfig
+void mqtt_ViewConfig
 (
 )
 {
@@ -746,7 +746,7 @@ void mqttApi_ViewConfig
     ViewConfig();
 }
 
-void mqttApi_Config
+void mqtt_Config
 (
     const char*     szBrokerUrl, ///< [IN] URL
     int32_t         n32PortNumber,
@@ -758,7 +758,7 @@ void mqttApi_Config
     Config(szBrokerUrl, n32PortNumber, n32KeepAlive, n32QoS);
 }
 
-void mqttApi_Connect
+void mqtt_Connect
 (
     const char*  szUser, ///< [IN] username
     const char*  szPassword ///< [IN] password
@@ -768,7 +768,7 @@ void mqttApi_Connect
     Connect(szUser, szPassword);
 }
 
-void mqttApi_Disconnect
+void mqtt_Disconnect
 (
     void
 )
@@ -777,7 +777,7 @@ void mqttApi_Disconnect
     Disconnect();
 }
 
-void mqttApi_Send
+void mqtt_Send
 (
     const char*  szKey, ///< [IN] Key
     const char*  szValue, ///< [IN] Value
@@ -801,7 +801,7 @@ static void FirstLayerSessionStateHandler
 )
 {
     MqttConnStateData_t* eventDataPtr = reportPtr;
-    mqttApi_SessionStateHandlerFunc_t clientHandlerFunc = secondLayerHandlerFunc;
+    mqtt_SessionStateHandlerFunc_t clientHandlerFunc = secondLayerHandlerFunc;
 
     clientHandlerFunc(
                       eventDataPtr->bIsConnected,
@@ -815,9 +815,9 @@ static void FirstLayerSessionStateHandler
  * This function adds a handler ...
  */
 //--------------------------------------------------------------------------------------------------
-mqttApi_SessionStateHandlerRef_t mqttApi_AddSessionStateHandler
+mqtt_SessionStateHandlerRef_t mqtt_AddSessionStateHandler
 (
-    mqttApi_SessionStateHandlerFunc_t   handlerPtr,
+    mqtt_SessionStateHandlerFunc_t   handlerPtr,
     void*                               contextPtr
 )
 {
@@ -832,7 +832,7 @@ mqttApi_SessionStateHandlerRef_t mqttApi_AddSessionStateHandler
 
     le_event_SetContextPtr(handlerRef, contextPtr);
 
-    return (mqttApi_SessionStateHandlerRef_t)(handlerRef);
+    return (mqtt_SessionStateHandlerRef_t)(handlerRef);
 }
 
 
@@ -841,9 +841,9 @@ mqttApi_SessionStateHandlerRef_t mqttApi_AddSessionStateHandler
  * This function removes a handler ...
  */
 //--------------------------------------------------------------------------------------------------
-void mqttApi_RemoveSessionStateHandler
+void mqtt_RemoveSessionStateHandler
 (
-    mqttApi_SessionStateHandlerRef_t addHandlerRef
+    mqtt_SessionStateHandlerRef_t addHandlerRef
 )
 {
     LE_DEBUG("%p", addHandlerRef);
@@ -864,7 +864,7 @@ static void FirstLayerIncomingMessageHandler
 )
 {
     MqttInMsgData_t*                        eventDataPtr = reportPtr;
-    mqttApi_IncomingMessageHandlerFunc_t    clientHandlerFunc = secondLayerHandlerFunc;
+    mqtt_IncomingMessageHandlerFunc_t    clientHandlerFunc = secondLayerHandlerFunc;
 
     clientHandlerFunc(
                       eventDataPtr->szTopicName,
@@ -879,9 +879,9 @@ static void FirstLayerIncomingMessageHandler
  * This function adds a handler ...
  */
 //--------------------------------------------------------------------------------------------------
-mqttApi_IncomingMessageHandlerRef_t mqttApi_AddIncomingMessageHandler
+mqtt_IncomingMessageHandlerRef_t mqtt_AddIncomingMessageHandler
 (
-    mqttApi_IncomingMessageHandlerFunc_t   handlerPtr,
+    mqtt_IncomingMessageHandlerFunc_t   handlerPtr,
     void*                                  contextPtr
 )
 {
@@ -896,7 +896,7 @@ mqttApi_IncomingMessageHandlerRef_t mqttApi_AddIncomingMessageHandler
 
     le_event_SetContextPtr(handlerRef, contextPtr);
 
-    return (mqttApi_IncomingMessageHandlerRef_t)(handlerRef);
+    return (mqtt_IncomingMessageHandlerRef_t)(handlerRef);
 }
 
 
@@ -905,9 +905,9 @@ mqttApi_IncomingMessageHandlerRef_t mqttApi_AddIncomingMessageHandler
  * This function removes a handler ...
  */
 //--------------------------------------------------------------------------------------------------
-void mqttApi_RemoveIncomingMessageHandler
+void mqtt_RemoveIncomingMessageHandler
 (
-    mqttApi_IncomingMessageHandlerRef_t addHandlerRef
+    mqtt_IncomingMessageHandlerRef_t addHandlerRef
 )
 {
     LE_DEBUG("%p", addHandlerRef);
