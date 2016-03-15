@@ -1,0 +1,24 @@
+# Build Products
+_build_*
+
+# ... per target
+*.localhost
+*.ar7
+*.ar86
+*.wp85
+*.virt
+*.update
+*.uinst
+
+# Vim
+*.swp
+
+# Eclipse / Developer Studio
+.cproject
+.project
+.settings
+package.properties
+wmnew.opt
+
+# KDev4
+*.kdev4
