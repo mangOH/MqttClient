@@ -1,0 +1,19 @@
+sources:
+{
+    receiver.c
+}
+
+requires:
+{
+    api:
+    {
+    }
+}
+
+provides:
+{
+    api:
+    {
+        receiverApi.api
+    }
+}

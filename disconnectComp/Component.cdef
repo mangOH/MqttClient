@@ -1,0 +1,14 @@
+
+requires:
+{
+    api:
+    {
+        mqttApi.api
+    }
+}
+
+sources:
+{
+    disconnect.c
+}
+
