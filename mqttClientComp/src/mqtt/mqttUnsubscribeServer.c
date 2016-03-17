@@ -13,8 +13,8 @@
  * Contributors:
  *    Ian Craggs - initial API and implementation and/or initial documentation
  *******************************************************************************/
-
-#include "MQTTPacket.h"
+#include "legato.h"
+#include "mqttPacket.h"
 #include "StackTrace.h"
 
 #include <string.h>
@@ -43,7 +43,10 @@ int MQTTDeserialize_unsubscribe(unsigned char* dup, unsigned short* packetid, in
 	FUNC_ENTRY;
 	header.byte = readChar(&curdata);
 	if (header.bits.type != UNSUBSCRIBE)
+        {
+                LE_ERROR("header type != UNSUBSCRIBE");
 		goto exit;
+        }
 	*dup = header.bits.dup;
 
 	curdata += (rc = MQTTPacket_decodeBuf(curdata, &mylen)); /* read remaining length */
@@ -55,7 +58,10 @@ int MQTTDeserialize_unsubscribe(unsigned char* dup, unsigned short* packetid, in
 	while (curdata < enddata)
 	{
 		if (!readMQTTLenString(&topicFilters[*count], &curdata, enddata))
+                {
+                        LE_ERROR("invalid data");
 			goto exit;
+                }
 		(*count)++;
 	}
 
@@ -82,6 +88,7 @@ int MQTTSerialize_unsuback(unsigned char* buf, int buflen, unsigned short packet
 	FUNC_ENTRY;
 	if (buflen < 2)
 	{
+                LE_ERROR("buffer too short");
 		rc = MQTTPACKET_BUFFER_TOO_SHORT;
 		goto exit;
 	}

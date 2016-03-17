@@ -13,8 +13,8 @@
  * Contributors:
  *    Ian Craggs - initial API and implementation and/or initial documentation
  *******************************************************************************/
-
-#include "MQTTPacket.h"
+#include "legato.h"
+#include "mqttPacket.h"
 #include "StackTrace.h"
 
 #include <string.h>
@@ -62,6 +62,7 @@ int MQTTSerialize_publish(unsigned char* buf, int buflen, unsigned char dup, int
 	FUNC_ENTRY;
 	if (MQTTPacket_len(rem_len = MQTTSerialize_publishLength(qos, topicName, payloadlen)) > buflen)
 	{
+                LE_ERROR("buffer too short");
 		rc = MQTTPACKET_BUFFER_TOO_SHORT;
 		goto exit;
 	}
@@ -109,6 +110,7 @@ int MQTTSerialize_ack(unsigned char* buf, int buflen, unsigned char packettype, 
 	FUNC_ENTRY;
 	if (buflen < 4)
 	{
+                LE_ERROR("buffer too short");
 		rc = MQTTPACKET_BUFFER_TOO_SHORT;
 		goto exit;
 	}
