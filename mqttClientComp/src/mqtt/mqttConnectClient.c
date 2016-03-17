@@ -13,8 +13,8 @@
  * Contributors:
  *    Ian Craggs - initial API and implementation and/or initial documentation
  *******************************************************************************/
-
-#include "MQTTPacket.h"
+#include "legato.h"
+#include "mqttPacket.h"
 #include "StackTrace.h"
 
 #include <string.h>
@@ -66,6 +66,7 @@ int MQTTSerialize_connect(unsigned char* buf, int buflen, MQTTPacket_connectData
 	FUNC_ENTRY;
 	if (MQTTPacket_len(len = MQTTSerialize_connectLength(options)) > buflen)
 	{
+                LE_ERROR("buffer too short");
 		rc = MQTTPACKET_BUFFER_TOO_SHORT;
 		goto exit;
 	}
@@ -141,12 +142,19 @@ int MQTTDeserialize_connack(unsigned char* sessionPresent, unsigned char* connac
 	FUNC_ENTRY;
 	header.byte = readChar(&curdata);
 	if (header.bits.type != CONNACK)
+        {
+                LE_ERROR("header type != CONNACK");
 		goto exit;
+        }
 
 	curdata += (rc = MQTTPacket_decodeBuf(curdata, &mylen)); /* read remaining length */
 	enddata = curdata + mylen;
 	if (enddata - curdata < 2)
+        {
+                LE_ERROR("invalid remaining length(%u)", mylen);
+                rc = 0;
 		goto exit;
+        }
 
 	flags.all = readChar(&curdata);
 	*sessionPresent = flags.bits.sessionpresent;
@@ -175,6 +183,7 @@ int MQTTSerialize_zero(unsigned char* buf, int buflen, unsigned char packettype)
 	FUNC_ENTRY;
 	if (buflen < 2)
 	{
+                LE_ERROR("buffer too short");
 		rc = MQTTPACKET_BUFFER_TOO_SHORT;
 		goto exit;
 	}

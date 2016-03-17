@@ -13,9 +13,9 @@
  * Contributors:
  *    Ian Craggs - initial API and implementation and/or initial documentation
  *******************************************************************************/
-
+#include "legato.h"
 #include "StackTrace.h"
-#include "MQTTPacket.h"
+#include "mqttPacket.h"
 #include <string.h>
 
 #define min(a, b) ((a < b) ? a : b)
@@ -68,7 +68,10 @@ int MQTTDeserialize_connect(MQTTPacket_connectData* data, unsigned char* buf, in
 
 	if (!readMQTTLenString(&Protocol, &curdata, enddata) ||
 		enddata - curdata < 0) /* do we have enough data to read the protocol version byte? */
+        {
+                LE_ERROR("not enough data");
 		goto exit;
+        }
 
 	version = (int)readChar(&curdata); /* Protocol version */
 	/* If we don't recognize the protocol version, we don't parse the connect packet on the
@@ -80,7 +83,10 @@ int MQTTDeserialize_connect(MQTTPacket_connectData* data, unsigned char* buf, in
 		data->cleansession = flags.bits.cleansession;
 		data->keepAliveInterval = readInt(&curdata);
 		if (!readMQTTLenString(&data->clientID, &curdata, enddata))
+                {
+                        LE_ERROR("invalid data");
 			goto exit;
+                }
 		data->willFlag = flags.bits.will;
 		if (flags.bits.will)
 		{
@@ -88,18 +94,31 @@ int MQTTDeserialize_connect(MQTTPacket_connectData* data, unsigned char* buf, in
 			data->will.retained = flags.bits.willRetain;
 			if (!readMQTTLenString(&data->will.topicName, &curdata, enddata) ||
 				  !readMQTTLenString(&data->will.message, &curdata, enddata))
+                        {
+                                LE_ERROR("invalid data");
 				goto exit;
+                        }
 		}
 		if (flags.bits.username)
 		{
 			if (enddata - curdata < 3 || !readMQTTLenString(&data->username, &curdata, enddata))
+                        {
+                                LE_ERROR("no username");
 				goto exit; /* username flag set, but no username supplied - invalid */
+                        }
 			if (flags.bits.password &&
 				(enddata - curdata < 3 || !readMQTTLenString(&data->password, &curdata, enddata)))
+                        {
+                                LE_ERROR("no password");
 				goto exit; /* password flag set, but no password supplied - invalid */
+                        }
 		}
 		else if (flags.bits.password)
+                {
+                        LE_ERROR("no username");
 			goto exit; /* password flag set without username - invalid */
+                }
+
 		rc = 1;
 	}
 exit:
@@ -126,6 +145,7 @@ int MQTTSerialize_connack(unsigned char* buf, int buflen, unsigned char connack_
 	FUNC_ENTRY;
 	if (buflen < 2)
 	{
+                LE_ERROR("buffer too short");
 		rc = MQTTPACKET_BUFFER_TOO_SHORT;
 		goto exit;
 	}

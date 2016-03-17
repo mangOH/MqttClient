@@ -15,7 +15,7 @@
  *******************************************************************************/
 
 #include "StackTrace.h"
-#include "MQTTPacket.h"
+#include "mqttPacket.h"
 
 #include <string.h>
 

@@ -14,9 +14,9 @@
  *    Ian Craggs - initial API and implementation and/or initial documentation
  *    Sergio R. Caprile - non-blocking packet read functions for stream transport
  *******************************************************************************/
-
+#include "legato.h"
 #include "StackTrace.h"
-#include "MQTTPacket.h"
+#include "mqttPacket.h"
 
 #include <string.h>
 
@@ -66,16 +66,21 @@ int MQTTPacket_decode(int (*getcharfn)(unsigned char*, int), int* value)
 
 		if (++len > MAX_NO_OF_REMAINING_LENGTH_BYTES)
 		{
+                        LE_ERROR("read error");
 			rc = MQTTPACKET_READ_ERROR;	/* bad data */
 			goto exit;
 		}
 		rc = (*getcharfn)(&c, 1);
 		if (rc != 1)
+                {
+                        LE_ERROR("read error");
 			goto exit;
+                }
 		*value += (c & 127) * multiplier;
 		multiplier *= 128;
 	} while ((c & 128) != 0);
 exit:
+        LE_DEBUG("message length(%u)", len);
 	FUNC_EXIT_RC(len);
 	return len;
 }
@@ -296,7 +301,10 @@ int MQTTPacket_read(unsigned char* buf, int buflen, int (*getfn)(unsigned char*,
 
 	/* 1. read the header byte.  This has the packet type in it */
 	if ((*getfn)(buf, 1) != 1)
+        {
+                LE_ERROR("read header byte failed");
 		goto exit;
+        }
 
 	len = 1;
 	/* 2. read the remaining length.  This is variable in itself */
@@ -305,9 +313,15 @@ int MQTTPacket_read(unsigned char* buf, int buflen, int (*getfn)(unsigned char*,
 
 	/* 3. read the rest of the buffer using a callback to supply the rest of the data */
 	if((rem_len + len) > buflen)
+        {
+                LE_ERROR("invalid data");
 		goto exit;
+        }
 	if ((*getfn)(buf + len, rem_len) != rem_len)
+        {
+                LE_ERROR("invalid data");
 		goto exit;
+        }
 
 	header.byte = buf[0];
 	rc = header.bits.type;
@@ -334,9 +348,15 @@ static int MQTTPacket_decodenb(MQTTTransport *trp)
 	do {
 		int frc;
 		if (++(trp->len) > MAX_NO_OF_REMAINING_LENGTH_BYTES)
+                {
+                        LE_ERROR("invalid data");
 			goto exit;
+                }
 		if ((frc=(*trp->getfn)(trp->sck, &c, 1)) == -1)
+                {
+                        LE_ERROR("invalid data");
 			goto exit;
+                }
 		if (frc == 0){
 			rc = 0;
 			goto exit;
@@ -370,7 +390,10 @@ int MQTTPacket_readnb(unsigned char* buf, int buflen, MQTTTransport *trp)
 	case 0:
 		/* 1. read the header byte.  This has the packet type in it */
 		if ((frc=(*trp->getfn)(trp->sck, buf, 1)) == -1)
+                {
+                        LE_ERROR("read header byte failed");
 			goto exit;
+                }
 		if (frc == 0)
 			return 0;
 		trp->len = 0;
@@ -379,18 +402,27 @@ int MQTTPacket_readnb(unsigned char* buf, int buflen, MQTTTransport *trp)
 		/* 2. read the remaining length.  This is variable in itself */
 	case 2:
 		if((frc=MQTTPacket_decodenb(trp)) == MQTTPACKET_READ_ERROR)
+                {
+                        LE_ERROR("invalid data");
 			goto exit;
+                }
 		if(frc == 0)
 			return 0;
 		trp->len = 1 + MQTTPacket_encode(buf + 1, trp->rem_len); /* put the original remaining length back into the buffer */
 		if((trp->rem_len + trp->len) > buflen)
+                {
+                        LE_ERROR("invalid data");
 			goto exit;
+                }
 		++trp->state;
 		/*FALLTHROUGH*/
 	case 3:
 		/* 3. read the rest of the buffer using a callback to supply the rest of the data */
 		if ((frc=(*trp->getfn)(trp->sck, buf + trp->len, trp->rem_len)) == -1)
+                {
+                        LE_ERROR("invalid data");
 			goto exit;
+                }
 		if (frc == 0)
 			return 0;
 		trp->rem_len -= frc;

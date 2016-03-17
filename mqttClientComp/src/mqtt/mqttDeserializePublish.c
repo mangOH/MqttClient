@@ -13,9 +13,9 @@
  * Contributors:
  *    Ian Craggs - initial API and implementation and/or initial documentation
  *******************************************************************************/
-
+#include "legato.h"
 #include "StackTrace.h"
-#include "MQTTPacket.h"
+#include "mqttPacket.h"
 #include <string.h>
 
 #define min(a, b) ((a < b) ? 1 : 0)
@@ -45,7 +45,11 @@ int MQTTDeserialize_publish(unsigned char* dup, int* qos, unsigned char* retaine
 	FUNC_ENTRY;
 	header.byte = readChar(&curdata);
 	if (header.bits.type != PUBLISH)
+        {
+                LE_ERROR("header type != PUBLISH");
 		goto exit;
+        }
+
 	*dup = header.bits.dup;
 	*qos = header.bits.qos;
 	*retained = header.bits.retain;
@@ -55,7 +59,10 @@ int MQTTDeserialize_publish(unsigned char* dup, int* qos, unsigned char* retaine
 
 	if (!readMQTTLenString(topicName, &curdata, enddata) ||
 		enddata - curdata < 0) /* do we have enough data to read the protocol version byte? */
+        {
+                LE_ERROR("invalid data");
 		goto exit;
+        }
 
 	if (*qos > 0)
 		*packetid = readInt(&curdata);
@@ -96,7 +103,10 @@ int MQTTDeserialize_ack(unsigned char* packettype, unsigned char* dup, unsigned 
 	enddata = curdata + mylen;
 
 	if (enddata - curdata < 2)
+        {
+                LE_ERROR("invalid data");
 		goto exit;
+        }
 	*packetid = readInt(&curdata);
 
 	rc = 1;
