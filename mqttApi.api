@@ -18,7 +18,6 @@ FUNCTION Config
 //--------------------------------------------------------------------------------------------------
 FUNCTION Connect
 (
-	string		user[32] IN,
 	string		password[32] IN
 );
 

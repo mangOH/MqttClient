@@ -15,7 +15,6 @@
 #include "interfaces.h"
 
 int         nCount = 0;
-char        szUser[32] = {0};
 char        szPassword[32] = {0};
 
 
@@ -32,8 +31,7 @@ static void PrintUsage()
     const   char * usagePtr[] =
             {
                 "Usage of the 'connect' tool is:",
-                "   connect -u <username> -p <password>",
-                "   username is optional. IMEI will be used if it is not provided"
+                "   connect -p <password>"
             };
 
     for (idx = 0; idx < NUM_ARRAY_MEMBERS(usagePtr); idx++)
@@ -47,14 +45,6 @@ static void PrintUsage()
             fprintf(stderr, "%s\n", usagePtr[idx]);
         }
     }
-}
-
-
-void handler_CaptureUsername(const char * szUsername)
-{
-    LE_INFO("Username is: %s", szUsername);
-    strcpy(szUser, szUsername);
-    nCount++;
 }
 
 void handler_CapturePassword(const char * szPwd)
@@ -73,23 +63,15 @@ void handler_CapturePassword(const char * szPwd)
 COMPONENT_INIT
 {
     //int         nCount = 0;
-    //char        szUser[32] = {0};
     //char        szPassword[32] = {0};
     
 
     #if 1
     //temporary fix, as le_arg_GetStringOption is broken
-    le_arg_SetStringCallback(handler_CaptureUsername, "u", "username");
     le_arg_SetStringCallback(handler_CapturePassword, "p", "password");
     le_arg_SetFlagCallback(PrintUsage, "h", "help");
     le_arg_Scan();
     #else
-    if (LE_OK == le_arg_GetStringOption((const char **) &szUser, "u", NULL))
-    {
-        LE_INFO("Username is: %s", szUser);
-        nCount++;
-    }
-
     if (LE_OK == le_arg_GetStringOption((const char **) &szPassword, "p", NULL))
     {
         LE_INFO("Password is: %s", szPassword);
@@ -98,7 +80,7 @@ COMPONENT_INIT
     #endif
 
     LE_INFO("Calling mqttClient to start MQTT connection");
-    mqttApi_Connect(szUser, szPassword);
+    mqttApi_Connect(szPassword);
 
     exit(EXIT_SUCCESS);
 }

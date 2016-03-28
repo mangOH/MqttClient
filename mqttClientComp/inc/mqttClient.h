@@ -152,7 +152,7 @@ int mqttClient_disconnect(mqttClient_t*);
 
 int mqttClient_read(uint8_t*, int);
 int mqttClient_disconnectData(mqttClient_t*);
-int mqttClient_connectUser(mqttClient_t*, const char*, const char*);
+int mqttClient_connectUser(mqttClient_t*, const char*);
 
 mqttClient_t* mqttMain_getClient(void);
 void mqttClient_init(mqttClient_t*);

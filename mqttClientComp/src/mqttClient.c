@@ -1660,18 +1660,16 @@ cleanup:
   return rc;
 }
 
-int mqttClient_connectUser(mqttClient_t* clientData, const char* user, const char* password)
+int mqttClient_connectUser(mqttClient_t* clientData, const char* password)
 {
   int32_t rc = LE_OK;
 
   LE_ASSERT(clientData);
-  LE_ASSERT(user);
   LE_ASSERT(password);
 
   if (!clientData->session.isConnected)
   {
-    LE_DEBUG("user('%s') pw('%s')", user, password);
-    if (strlen(user) > 0) strcpy(clientData->deviceId, user);
+    LE_DEBUG("pw('%s')", password);
     strcpy(clientData->session.secret, password);
 
     if (!clientData->dataConnectionState)

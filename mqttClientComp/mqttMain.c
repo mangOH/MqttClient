@@ -116,10 +116,10 @@ void mqttApi_Config(const char* brokerUrl, int32_t portNumber, int32_t keepAlive
   } 
 }
 
-void mqttApi_Connect(const char* user, const char* password)
+void mqttApi_Connect(const char* password)
 {
-  LE_INFO("connect user('%s') password('%s')", user, password);
-  mqttClient_connectUser(&mqttClient, user, password);
+  LE_INFO("connect password('%s')", password);
+  mqttClient_connectUser(&mqttClient, password);
 }
 
 void mqttApi_Disconnect(void)
