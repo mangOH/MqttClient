@@ -29,16 +29,16 @@ bindings:
     mqttClient.mqttClientComp.le_data -> dataConnectionService.le_data
     mqttClient.mqttClientComp.le_info -> modemService.le_info
 
-    connect.connectComp.mqttApi -> mqttClient.mqttClientComp.mqttApi
-    disconnect.disconnectComp.mqttApi -> mqttClient.mqttClientComp.mqttApi
-    send.sendComp.mqttApi -> mqttClient.mqttClientComp.mqttApi
+    connect.connectComp.mqtt -> mqttClient.mqttClientComp.mqtt
+    disconnect.disconnectComp.mqtt -> mqttClient.mqttClientComp.mqtt
+    send.sendComp.mqtt -> mqttClient.mqttClientComp.mqtt
 }
 
 provides:
 {
     api:
     {
-        mqttClient.mqttClientComp.mqttApi
+        mqttClient.mqttClientComp.mqtt
     }
 }
 

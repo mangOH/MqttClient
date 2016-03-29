@@ -3,7 +3,7 @@ requires:
 {
     api:
     {
-        mqttApi.api
+        mqtt.api
     }
 }
 

@@ -79,8 +79,8 @@ COMPONENT_INIT
     }
     #endif
 
-    LE_INFO("Calling mqttClient to start MQTT connection");
-    mqttApi_Connect(szPassword);
+    LE_INFO("Start MQTT connection");
+    mqtt_Connect(szPassword);
 
     exit(EXIT_SUCCESS);
 }

@@ -54,7 +54,7 @@ cleanup:
 static void mqttMain_IncomingMessageHandler(void* reportPtr, void* incomingMessageHandler)
 {
   mqttClient_inMsg_t* eventDataPtr = reportPtr;
-  mqttApi_IncomingMessageHandlerFunc_t clientHandlerFunc = incomingMessageHandler;
+  mqtt_IncomingMessageHandlerFunc_t clientHandlerFunc = incomingMessageHandler;
 
   LE_ASSERT(reportPtr);
   LE_ASSERT(incomingMessageHandler);
@@ -70,7 +70,7 @@ static void mqttMain_IncomingMessageHandler(void* reportPtr, void* incomingMessa
 static void mqttMain_SessionStateHandler(void* reportPtr, void* sessionStateHandler)
 {
   mqttClient_connStateData_t* eventDataPtr = reportPtr;
-  mqttApi_SessionStateHandlerFunc_t clientHandlerFunc = sessionStateHandler;
+  mqtt_SessionStateHandlerFunc_t clientHandlerFunc = sessionStateHandler;
 
   clientHandlerFunc(eventDataPtr->isConnected,
                     eventDataPtr->connectErrorCode,
@@ -89,7 +89,7 @@ __inline mqttClient_t* mqttMain_getClient(void)
   return &mqttClient;
 };
 
-void mqttApi_Config(const char* brokerUrl, int32_t portNumber, int32_t keepAlive, int32_t QoS)
+void mqtt_Config(const char* brokerUrl, int32_t portNumber, int32_t keepAlive, int32_t QoS)
 {
   if (strlen(brokerUrl) > 0)
   {
@@ -116,19 +116,19 @@ void mqttApi_Config(const char* brokerUrl, int32_t portNumber, int32_t keepAlive
   } 
 }
 
-void mqttApi_Connect(const char* password)
+void mqtt_Connect(const char* password)
 {
   LE_INFO("connect password('%s')", password);
   mqttClient_connectUser(&mqttClient, password);
 }
 
-void mqttApi_Disconnect(void)
+void mqtt_Disconnect(void)
 {
   LE_INFO("disconnect");
   mqttClient_disconnectData(&mqttClient);
 }
 
-void mqttApi_Send(const char* key, const char* value, int32_t* returnCode)
+void mqtt_Send(const char* key, const char* value, int32_t* returnCode)
 {
   int32_t rc = LE_OK;
 
@@ -145,7 +145,7 @@ cleanup:
   return;
 }
 
-mqttApi_SessionStateHandlerRef_t mqttApi_AddSessionStateHandler(mqttApi_SessionStateHandlerFunc_t handlerPtr, void* contextPtr)
+mqtt_SessionStateHandlerRef_t mqtt_AddSessionStateHandler(mqtt_SessionStateHandlerFunc_t handlerPtr, void* contextPtr)
 {
   LE_DEBUG("add session state handler(%p)", handlerPtr);
   le_event_HandlerRef_t handlerRef = le_event_AddLayeredHandler("MqttConnState",
@@ -154,16 +154,16 @@ mqttApi_SessionStateHandlerRef_t mqttApi_AddSessionStateHandler(mqttApi_SessionS
                                                                 (le_event_HandlerFunc_t)handlerPtr);
 
   le_event_SetContextPtr(handlerRef, contextPtr);
-  return (mqttApi_SessionStateHandlerRef_t)(handlerRef);
+  return (mqtt_SessionStateHandlerRef_t)(handlerRef);
 }
 
-void mqttApi_RemoveSessionStateHandler(mqttApi_SessionStateHandlerRef_t addHandlerRef)
+void mqtt_RemoveSessionStateHandler(mqtt_SessionStateHandlerRef_t addHandlerRef)
 {
   LE_DEBUG("remove session state handler(%p)", addHandlerRef);
   le_event_RemoveHandler((le_event_HandlerRef_t)addHandlerRef);
 }
 
-mqttApi_IncomingMessageHandlerRef_t mqttApi_AddIncomingMessageHandler(mqttApi_IncomingMessageHandlerFunc_t handlerPtr, void* contextPtr)
+mqtt_IncomingMessageHandlerRef_t mqtt_AddIncomingMessageHandler(mqtt_IncomingMessageHandlerFunc_t handlerPtr, void* contextPtr)
 {
   LE_DEBUG("add incoming message handler(%p)", handlerPtr);
   le_event_HandlerRef_t handlerRef = le_event_AddLayeredHandler("MqttIncomingMessage",
@@ -172,10 +172,10 @@ mqttApi_IncomingMessageHandlerRef_t mqttApi_AddIncomingMessageHandler(mqttApi_In
                                                                 (le_event_HandlerFunc_t)handlerPtr);
 
   le_event_SetContextPtr(handlerRef, contextPtr);
-  return (mqttApi_IncomingMessageHandlerRef_t)(handlerRef);
+  return (mqtt_IncomingMessageHandlerRef_t)(handlerRef);
 }
 
-void mqttApi_RemoveIncomingMessageHandler(mqttApi_IncomingMessageHandlerRef_t addHandlerRef)
+void mqtt_RemoveIncomingMessageHandler(mqtt_IncomingMessageHandlerRef_t addHandlerRef)
 {
   LE_DEBUG("remove incoming message handler(%p)", addHandlerRef);
   le_event_RemoveHandler((le_event_HandlerRef_t)addHandlerRef);
