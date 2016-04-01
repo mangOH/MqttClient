@@ -1,5 +1,5 @@
 /*******************************************************************************************************************
- 
+
  MQTT Spooler v1.0
 
 	This tool automatically converts CVS data to MQTT messages prior publishing to Sierra Wireless Airvantage server.
@@ -687,8 +687,8 @@ int main(int argc, char** argv)
 		NewNetwork(&oNetwork);
 		ConnectNetwork(&oNetwork, szServerUrl, nServerPortNumber);
 		MQTTClient(&mqttClient, &oNetwork, TIMEOUT_MS, buf, sizeof(buf), readbuf, sizeof(readbuf));
-	 
-		MQTTPacket_connectData data = MQTTPacket_connectData_initializer;       
+	
+		MQTTPacket_connectData data = MQTTPacket_connectData_initializer;
 		data.willFlag = 0;
 		data.MQTTVersion = MQTT_VERSION;
 		data.clientID.cstring = g_szDeviceId;
@@ -705,7 +705,7 @@ int main(int argc, char** argv)
 		printf("Connected %d\n", rc);
 	    	fflush(stdout);
 
-		if (rc == SUCCESS) 
+		if (rc == SUCCESS)
 		{
 			//connected			
 			break;

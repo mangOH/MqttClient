@@ -131,7 +131,7 @@ exit:
   * Serializes the connack packet into the supplied buffer.
   * @param buf the buffer into which the packet will be serialized
   * @param buflen the length in bytes of the supplied buffer
-  * @param connack_rc the integer connack return code to be used 
+  * @param connack_rc the integer connack return code to be used
   * @param sessionPresent the MQTT 3.1.1 sessionPresent flag
   * @return serialized length, or error if 0
   */
@@ -157,7 +157,7 @@ int MQTTSerialize_connack(unsigned char* buf, int buflen, unsigned char connack_
 
 	flags.all = 0;
 	flags.bits.sessionpresent = sessionPresent;
-	writeChar(&ptr, flags.all); 
+	writeChar(&ptr, flags.all);
 	writeChar(&ptr, connack_rc);
 
 	rc = ptr - buf;

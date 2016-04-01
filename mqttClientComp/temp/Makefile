@@ -12,8 +12,8 @@ EXECUTABLE=mqttspooler
 
 all: $(SOURCES) $(EXECUTABLE)
 	
-$(EXECUTABLE): $(OBJECTS) 
-	$(CC) $(OBJECTS) -o $@ $(LDFLAGS) 
+$(EXECUTABLE): $(OBJECTS)
+	$(CC) $(OBJECTS) -o $@ $(LDFLAGS)
 
 .c.o:
 	$(CC) $(CFLAGS) $< -o $@

@@ -19,7 +19,7 @@
 #define MQTTCONNECT_H_
 
 #if !defined(DLLImport)
-  #define DLLImport 
+  #define DLLImport
 #endif
 #if !defined(DLLExport)
   #define DLLExport

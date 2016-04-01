@@ -1,3 +1,4 @@
+version: 1.0
 sandboxed: false
 
 executables:
@@ -8,7 +9,7 @@ executables:
     send        = ( sendComp )
 }
 
-processes: 
+processes:
 {
     envVars:
     {
@@ -42,4 +43,3 @@ provides:
     }
 }
 
-version: 1.0

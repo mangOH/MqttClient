@@ -92,7 +92,7 @@ int SWIR_MQTTClient::connect(char* szIdentifier, char* szPassword, unsigned long
 		#ifdef _SWIR_OUTPUT_
 		SWIR_TRACE(F("MQTT connecting"));
 		#endif
-		MQTTPacket_connectData data = MQTTPacket_connectData_initializer;       
+		MQTTPacket_connectData data = MQTTPacket_connectData_initializer;
 		data.MQTTVersion = 3;
 		data.willFlag = 0;
 		data.clientID.cstring = szIdentifier;
@@ -175,7 +175,7 @@ int SWIR_MQTTClient::connect(char* szPassword, unsigned long ulKeepAlive)
 		SWIR_TRACE(F("MQTT connecting"));
 		#endif
 		SWIR_AVAILABLE_SRAM
-		MQTTPacket_connectData data = MQTTPacket_connectData_initializer;       
+		MQTTPacket_connectData data = MQTTPacket_connectData_initializer;
 		data.MQTTVersion = 3;
 		data.willFlag = 0;
 		data.clientID.cstring = szIMEI;

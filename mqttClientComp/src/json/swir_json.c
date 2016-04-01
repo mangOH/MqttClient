@@ -95,7 +95,7 @@ char* swirjson_lstSerialize(char* szKey, int nValueCount, char** pszValueList, u
 		        sprintf(szPayload, "%s {\"timestamp\" : %lu, \"value\" : \"%s\"}", szPayload, pulTimestampList[i], pszValueList[i]);
                 }
                 free(pszValueList[i]);
-                
+
                 if (i < nValueCount-1)
                 {
                         strcat(szPayload, ",");
@@ -110,7 +110,7 @@ char* swirjson_lstSerialize(char* szKey, int nValueCount, char** pszValueList, u
 char * swirjson_getValue(char* szJson, int nKeyIndex, char* szSearchKey)
 {
 	//use case 1 : nKeyIndex = -1 --> search by KeyName using szSearchKey as input
-	//use case 2 : nKeyIndex > -1 --> search by index, szSearchKey, as output, will be filled with the keyName indexed by nIndexKey 
+	//use case 2 : nKeyIndex > -1 --> search by index, szSearchKey, as output, will be filled with the keyName indexed by nIndexKey
 	char *	pszValue = NULL;
 
 	char	cChar, cOpen, cClose;

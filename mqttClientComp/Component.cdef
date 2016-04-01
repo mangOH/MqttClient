@@ -4,7 +4,7 @@ sources:
     src/mqttClient.c
     src/mqtt/mqttConnectClient.c
     src/mqtt/mqttConnectServer.c
-    src/mqtt/mqttUnsubscribeClient.c	
+    src/mqtt/mqttUnsubscribeClient.c
     src/mqtt/mqttUnsubscribeServer.c
     src/mqtt/mqttSerializePublish.c
     src/mqtt/mqttSubscribeClient.c
