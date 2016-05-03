@@ -3,7 +3,7 @@ requires:
 {
     api:
     {
-        mqtt.api
+        $MANGOH_ROOT/apps/MqttClient/mqtt.api
     }
 }
 

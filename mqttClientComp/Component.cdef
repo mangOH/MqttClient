@@ -19,15 +19,21 @@ requires:
     api:
     {
         le_data.api
-        le_info.api
+        modemServices/le_info.api
         //receiverApi.api
     }
+}
+
+cflags:
+{
+    -I$MANGOH_ROOT/apps/MqttClient/mqttClientComp/inc
+    -I$MANGOH_ROOT/apps/MqttClient/mqttClientComp/inc/mqtt
 }
 
 provides:
 {
     api:
     {
-        mqtt.api
+        $MANGOH_ROOT/apps/MqttClient/mqtt.api
     }
 }
