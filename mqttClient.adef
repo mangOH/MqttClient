@@ -21,6 +21,8 @@ processes:
         (mqttClient)
         //(receiver)
     }
+
+    faultAction: restart
 }
 
 start: auto
