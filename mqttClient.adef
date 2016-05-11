@@ -37,11 +37,7 @@ bindings:
     send.sendComp.mqtt -> mqttClient.mqttClientComp.mqtt
 }
 
-provides:
+extern:
 {
-    api:
-    {
-        mqttClient.mqttClientComp.mqtt
-    }
+    mqttClient.mqttClientComp.mqtt
 }
-
