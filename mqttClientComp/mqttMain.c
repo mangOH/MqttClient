@@ -145,6 +145,21 @@ cleanup:
   return;
 }
 
+le_result_t mqtt_Publish(const char* topic, const uint8_t* payload, size_t payloadLength)
+{
+    mqttClient_msg_t msg =
+    {
+        .qos = mqttClient.session.config.QoS,
+        .retained = 0,
+        .dup = 0,
+        .id = 0,
+        .payload = (char*)payload, // gross, we have to cast away const-ness of the payload
+        .payloadLen = payloadLength,
+    };
+
+    return mqttClient_publish(&mqttClient, topic, &msg);
+}
+
 mqtt_SessionStateHandlerRef_t mqtt_AddSessionStateHandler(mqtt_SessionStateHandlerFunc_t handlerPtr, void* contextPtr)
 {
   LE_DEBUG("add session state handler(%p)", handlerPtr);

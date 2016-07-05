@@ -42,6 +42,24 @@ FUNCTION Send
 
 //--------------------------------------------------------------------------------------------------
 /**
+ * Publish the provided payload on the provided topic
+ *
+ * @return
+ *      the return value description
+ *
+ * @note
+ *      The Publish function provides a more general and lower level interface than the Send
+ *      function.
+ */
+//--------------------------------------------------------------------------------------------------
+FUNCTION le_result_t Publish
+(
+    string topic[128] IN,
+    uint8 payload[2048] IN
+);
+
+//--------------------------------------------------------------------------------------------------
+/**
  * Handler for session state changes
  */
 //--------------------------------------------------------------------------------------------------
