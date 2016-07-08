@@ -1683,12 +1683,11 @@ int mqttClient_connectUser(mqttClient_t* clientData, const char* password)
     {
       LE_ERROR("mqttClient_connectData() failed(%d)", rc);
       goto cleanup;
-    } 
+    }
   }
   else
-  {    
-    LE_INFO("already Connected");
-    mqttClient_SendConnStateEvent(false, 1, -1);
+  {
+    LE_KILL_CLIENT("The MQTT client is already connected");
   }
 
 cleanup:
