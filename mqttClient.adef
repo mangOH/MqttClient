@@ -32,6 +32,8 @@ bindings:
     mqttClient.mqttClientComp.le_data -> dataConnectionService.le_data
     mqttClient.mqttClientComp.le_info -> modemService.le_info
 
+    mqttClient.mqttClientComp.le_wifiClient -> wifiService.le_wifiClient
+
     connect.connectComp.mqtt -> mqttClient.mqttClientComp.mqtt
     disconnect.disconnectComp.mqtt -> mqttClient.mqttClientComp.mqtt
     send.sendComp.mqtt -> mqttClient.mqttClientComp.mqtt

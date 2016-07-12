@@ -931,9 +931,8 @@ cleanup:
   return;
 }
 
-static void mqttClient_dataConnectionStateHandler(const char* intfName, bool isConnected, void* contextPtr)
+static void mqttClient_connectionHandler(mqttClient_t* clientData, const char* intfName, bool isConnected)
 {
-  mqttClient_t* clientData = (mqttClient_t*)contextPtr;
   int32_t rc = LE_OK;
 
   LE_ASSERT(clientData);
@@ -973,6 +972,88 @@ cleanup:
   }
 
   return;
+}
+
+static le_result_t mqttClient_wifiDhcpRequest(const char* intfName)
+{
+    int16_t systemResult;
+    char tmpString[512];
+
+    // DHCP Client
+    snprintf(tmpString,
+            sizeof(tmpString),
+            "PATH=/usr/bin:/bin:/usr/local/sbin:/usr/sbin:/sbin;"
+            "/sbin/udhcpc -R -b -i %s", intfName
+    );
+
+    LE_DEBUG("Launching WiFi DHCP client ...");
+
+    systemResult = system(tmpString);
+    // Return value of -1 means that the fork() has failed (see man system).
+    if ( 0 != WEXITSTATUS(systemResult) )
+    {
+        LE_ERROR("WiFi DHCP client %s Failed: (%d)", tmpString, systemResult);
+        return LE_NOT_POSSIBLE;
+    }
+
+    LE_INFO("WiFi DHCP client: %s", tmpString);
+    return LE_OK;
+}
+
+static void mqttClient_wifiEventHandler(le_wifiClient_Event_t clientEvent, void *contextPtr)
+{
+  mqttClient_t* clientData = (mqttClient_t*)contextPtr;
+  bool isConnected = false;
+
+  if( (clientEvent != LE_WIFICLIENT_EVENT_SCAN_DONE) &&
+      (le_thread_GetCurrent() != clientData->wifiScanThread))
+  {
+    LE_DEBUG("WiFi event received from scan thread");
+    return;
+  }
+
+  switch(clientEvent)
+  {
+    case LE_WIFICLIENT_EVENT_CONNECTED:
+      LE_INFO("WiFi Client Connected");
+
+      if(mqttClient_wifiDhcpRequest("wlan0") != LE_OK)
+      {
+        return;
+      }
+
+      isConnected = true;
+      break;
+
+    case LE_WIFICLIENT_EVENT_DISCONNECTED:
+      LE_INFO("WiFi Client Disconnected");
+      break;
+
+    case LE_WIFICLIENT_EVENT_SCAN_DONE:
+      LE_INFO("WiFi Client Scan is done");
+      le_sem_Post(clientData->wifiScanAvailable);
+      return;
+  }
+
+  mqttClient_connectionHandler(clientData, "wifi", isConnected);
+}
+
+static void* mqttClient_wifiEventThread(void *contextPtr)
+{
+  mqttClient_t* clientData = (mqttClient_t*)contextPtr;
+
+  le_wifiClient_ConnectService();
+
+  le_wifiClient_AddNewEventHandler(mqttClient_wifiEventHandler, clientData);
+
+  le_event_RunLoop();
+}
+
+static void mqttClient_dataConnectionStateHandler(const char* intfName, bool isConnected, void* contextPtr)
+{
+  mqttClient_t* clientData = (mqttClient_t*)contextPtr;
+
+  mqttClient_connectionHandler(clientData, intfName, isConnected);
 }
 
 static int mqttClient_connect(mqttClient_t* clientData)
@@ -1356,9 +1437,93 @@ cleanup:
   return rc;
 }
 
+static le_result_t mqttClient_wifiConnectData(mqttClient_t* clientData)
+{
+  le_wifiClient_AccessPointRef_t accessPointRef;
+  const le_clk_Time_t wifiScanTimeout = {10, 0};
+
+  LE_DEBUG("Trying WiFi as a data connection provider");
+
+  if(LE_OK != le_wifiClient_Start())
+  {
+    LE_ERROR("le_wifiClient_Start ERROR, not considering WiFi as data connection provider");
+    return LE_UNSUPPORTED;
+  }
+
+  LE_DEBUG("le_wifiClient_Start OK, starting scan ...");
+  if(NULL == clientData->wifiScanThread)
+  {
+    /* Spawn thread to receive the event */
+    clientData->wifiScanThread = le_thread_Create("WifiScanThread", mqttClient_wifiEventThread, clientData);
+    le_thread_Start(clientData->wifiScanThread);
+  }
+
+  if(LE_OK != le_wifiClient_Scan())
+  {
+    LE_ERROR("le_wifiClient_Scan ERROR");
+    return LE_COMM_ERROR;
+  }
+
+  LE_DEBUG("WiFi Scan OK, waiting for results ...");
+  if(LE_OK != le_sem_WaitWithTimeOut(clientData->wifiScanAvailable, wifiScanTimeout))
+  {
+    LE_ERROR("WiFi scan: timeout while waiting for results");
+    return LE_TIMEOUT;
+  }
+
+  LE_DEBUG("WiFi Scan results available, trying to connect to any AP ...");
+  for(
+    accessPointRef = le_wifiClient_GetFirstAccessPoint();
+    accessPointRef != NULL;
+    accessPointRef = le_wifiClient_GetNextAccessPoint()
+  )
+  {
+    uint8_t ssid[LE_WIFIDEFS_MAX_SSID_BYTES];
+    size_t ssidNumElements = LE_WIFIDEFS_MAX_SSID_BYTES;
+
+    LE_DEBUG("le_wifiClient_Scan Trying Ref%p", accessPointRef);
+
+    if(LE_OK != le_wifiClient_GetSsid(accessPointRef,
+                                      ssid,
+                                      &ssidNumElements) )
+    {
+      LE_ERROR("le_wifiClient_GetSsid ERROR");
+      continue;
+    }
+
+    LE_INFO("WIFi: Trying to connect to SSID '%s'", ssid);
+
+
+    if (LE_OK != le_wifiClient_Connect(accessPointRef))
+    {
+      LE_ERROR("le_wifiClient_Connect ERROR");
+      continue;
+    }
+
+    LE_INFO("WiFi: Connected to SSID '%s'", ssid);
+
+    /* Stop here and let the rest of the processing happen in the connection handler */
+    return LE_OK;
+  }
+
+  LE_DEBUG("WiFi: Unable to connect to any AP ...");
+
+  return LE_NOT_POSSIBLE;
+}
+
 static int mqttClient_connectData(mqttClient_t* clientData)
 {
   int rc = LE_OK;
+
+  if (clientData->dataProvider != MQTT_CLIENT_DATA_DCS)
+  {
+    LE_DEBUG("Trying WiFi as a data connection provider");
+    if (mqttClient_wifiConnectData(clientData) == LE_OK)
+    {
+      clientData->dataProvider = MQTT_CLIENT_DATA_WIFI;
+      goto cleanup;
+    }
+  }
 
   if (clientData->requestRef)
   {
@@ -1367,6 +1532,7 @@ static int mqttClient_connectData(mqttClient_t* clientData)
     goto cleanup;
   }
 
+  clientData->dataProvider = MQTT_CLIENT_DATA_DCS;
   clientData->requestRef = le_data_Request();
   LE_INFO("requesting data connection(%p)", clientData->requestRef);
 
@@ -1672,12 +1838,17 @@ int mqttClient_connectUser(mqttClient_t* clientData, const char* password)
     LE_DEBUG("pw('%s')", password);
     strcpy(clientData->session.secret, password);
 
+    if (!clientData->wifiEventHandlerRef)
+    {
+      clientData->wifiEventHandlerRef = le_wifiClient_AddNewEventHandler(mqttClient_wifiEventHandler, clientData);
+    }
+
     if (!clientData->dataConnectionState)
     {
       clientData->dataConnectionState = le_data_AddConnectionStateHandler(mqttClient_dataConnectionStateHandler, clientData);
     }
 
-    LE_DEBUG("initiated data connection");
+    LE_DEBUG("initiate data connection");
     rc = mqttClient_connectData(clientData);
     if (rc)
     {
@@ -1699,6 +1870,7 @@ void mqttClient_init(mqttClient_t* clientData)
   LE_ASSERT(clientData);
 
   memset(clientData, 0, sizeof(mqttClient_t));
+
   clientData->session.tx.ptr = clientData->session.tx.buf;
   clientData->session.rx.ptr = clientData->session.rx.buf;
 
@@ -1712,6 +1884,7 @@ void mqttClient_init(mqttClient_t* clientData)
   clientData->connStateEvent = le_event_CreateId("MqttConnState", sizeof(mqttClient_connStateData_t));
   clientData->inMsgEvent = le_event_CreateId("MqttInMsg", sizeof(mqttClient_inMsg_t));
 
+  clientData->wifiScanAvailable = le_sem_Create("WiFiScanAvailable", 0);
   le_info_ConnectService();
   le_info_GetImei(clientData->deviceId, sizeof(clientData->deviceId));
   LE_DEBUG("IMEI('%s')", clientData->deviceId);
