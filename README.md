@@ -3,7 +3,7 @@ mangOH MQTT Client
 
 This repository implements an MQTT client for the [mangOH](http://mangoh.io).  The implementation
 is derived from the embedded C client provided by the
-[eclipse paho project](http://www.ecplipse.org/paho/).
+[Eclipse Paho project](https://www.eclipse.org/paho/).
 
 Limitations
 -----------
