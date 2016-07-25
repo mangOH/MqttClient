@@ -1,43 +1,72 @@
-version: 1.0
-sandboxed: false
+version: 2.0
+sandboxed: true
+start: auto
+
+bundles:
+{
+    file:
+    {
+        paho.mqtt.c/build/output/libpaho-mqtt3cs.so     /lib/
+        paho.mqtt.c/build/output/libpaho-mqtt3cs.so.1   /lib/
+        paho.mqtt.c/build/output/libpaho-mqtt3cs.so.1.0 /lib/
+        resolv.conf                                     /etc/
+    }
+}
 
 executables:
 {
-    mqttClient  = ( mqttClientComp )
-    connect     = ( connectComp )
-    disconnect  = ( disconnectComp )
-    send        = ( sendComp )
+    mqttClientService   = (mqttClientService)
+    //testPublisher       = (testPublisher)
+    //testSubscriber      = (testSubscriber)
 }
 
 processes:
 {
-    envVars:
-    {
-        LE_LOG_LEVEL = DEBUG
-    }
-
     run:
     {
-        (mqttClient)
-        //(receiver)
+        (mqttClientService)
+        //(testPublisher)
+        //(testSubscriber)
+    }
+
+    envVars:
+    {
+        // Defining these environment variables results in paho.mqtt.c producing trace output.
+        // Least to most verbose: ERROR, PROTOCOL, MINIMUM, MEDIUM, MAXIMUM
+        // NOTE: Setting the level to MINIMUM or higher causes problems due to errno being set
+        // during the trace.
+        MQTT_C_CLIENT_TRACE = ON
+        MQTT_C_CLIENT_TRACE_LEVEL = ERROR
     }
 
     faultAction: restart
 }
 
-start: auto
+requires:
+{
+    file:
+    {
+        /usr/bin/strace             /bin/
+        /usr/lib/libssl.so          /lib/
+        /usr/lib/libssl.so.1.0.0    /lib/
+        /lib/libcrypto.so           /lib/
+        /lib/libcrypto.so.1.0.0     /lib/
+        /lib/libnss_dns.so.2        /lib/
+        /lib/libnss_dns-2.20.so     /lib/
+        /lib/libresolv.so.2         /lib/
+        /lib/libresolv-2.20.so      /lib/
+    }
+}
+
 
 bindings:
 {
-    mqttClient.mqttClientComp.le_data -> dataConnectionService.le_data
-    mqttClient.mqttClientComp.le_info -> modemService.le_info
-
-    connect.connectComp.mqtt -> mqttClient.mqttClientComp.mqtt
-    disconnect.disconnectComp.mqtt -> mqttClient.mqttClientComp.mqtt
-    send.sendComp.mqtt -> mqttClient.mqttClientComp.mqtt
+    //testPublisher.testPublisher.mqtt -> mqttClientService.mqttClientService.mqtt
+    //testSubscriber.testSubscriber.mqtt -> mqttClientService.mqttClientService.mqtt
 }
 
 extern:
 {
-    mqttClient.mqttClientComp.mqtt
+    mqttClientService.mqttClientService.mqtt
 }
+

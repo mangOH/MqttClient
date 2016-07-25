@@ -1,0 +1,33 @@
+sources:
+{
+    // Implementation of mqtt.api
+    mqttClientService.c
+}
+
+requires:
+{
+    api:
+    {
+    }
+}
+
+cflags:
+{
+    -std=c99
+    -I${MANGOH_ROOT}/apps/MqttClient/paho.mqtt.c/src
+}
+
+ldflags:
+{
+    -L${MANGOH_ROOT}/apps/MqttClient/paho.mqtt.c/build/output
+    -lpaho-mqtt3cs
+}
+
+provides:
+{
+    api:
+    {
+        $MANGOH_ROOT/apps/MqttClient/mqtt.api
+    }
+}
+

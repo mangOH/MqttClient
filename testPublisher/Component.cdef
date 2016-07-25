@@ -1,0 +1,18 @@
+
+sources:
+{
+    testPublisher.c
+}
+
+requires:
+{
+    api:
+    {
+        ${MANGOH_ROOT}/apps/MqttClient/mqtt.api
+    }
+}
+
+cflags:
+{
+    -std=c99
+}

@@ -1,105 +1,112 @@
-//--------------------------------------------------------------------------------------------------
-/**
- * Configure the session
- */
-//--------------------------------------------------------------------------------------------------
-FUNCTION Config
+DEFINE MAX_BROKER_URI_LENGTH = 256;
+DEFINE MAX_CLIENT_ID_LENGTH = 23;
+DEFINE MAX_TOPIC_LENGTH = 1024;
+DEFINE MAX_PAYLOAD_LENGTH = 1024;
+DEFINE MAX_USERNAME_LENGTH = 64;
+DEFINE MAX_PASSWORD_LENGTH = 64;
+
+ENUM Qos
+{
+    QOS0_TRANSMIT_ONCE,
+    QOS1_RECEIVE_AT_LEAST_ONCE,
+    QOS2_RECEIVE_EXACTLY_ONCE
+};
+
+REFERENCE Session;
+
+HANDLER ConnectionLostHandler
 (
-    string brokerUrl[256] IN,
-    int32 portNumber IN,
-    int32 keepAlive IN,
-    int32 QoS IN
 );
 
-//--------------------------------------------------------------------------------------------------
-/**
- * Open a MQTT session
- */
-//--------------------------------------------------------------------------------------------------
-FUNCTION Connect
+EVENT ConnectionLost
 (
-    string password[32] IN
+    Session session IN,
+    ConnectionLostHandler handler IN
 );
 
-//--------------------------------------------------------------------------------------------------
-/**
- * Close MQTT session
- */
-//--------------------------------------------------------------------------------------------------
-FUNCTION Disconnect();
-
-//--------------------------------------------------------------------------------------------------
-/**
- * Send data (key, value) to MQTT broker
- */
-//--------------------------------------------------------------------------------------------------
-FUNCTION Send
+/*
+ * NOTE: This version is not possible because Legato 16.04 doesn't support arrays as handler
+ * parameters.
+HANDLER MessageArrivedHandler
 (
-    string key[128] IN,
-    string value[128] IN,
-    int32  errCode OUT
+    string topic[MAX_TOPIC_LENGTH] IN,
+    uint8 payload[MAX_PAYLOAD_LENGTH] IN
+);
+*/
+
+REFERENCE Message;
+
+// Temporary API until Legato is enhanced to support arrays as handler parameters
+HANDLER MessageArrivedHandler
+(
+    Message message IN
 );
 
-//--------------------------------------------------------------------------------------------------
-/**
- * Publish the provided payload on the provided topic
- *
- * @return
- *      the return value description
- *
- * @note
- *      The Publish function provides a more general and lower level interface than the Send
- *      function.
- */
-//--------------------------------------------------------------------------------------------------
+FUNCTION GetMessage
+(
+    Message message IN,
+    string topic[MAX_TOPIC_LENGTH] OUT,
+    uint8 payload[MAX_PAYLOAD_LENGTH] OUT
+);
+
+EVENT MessageArrived
+(
+    Session session IN,
+    MessageArrivedHandler handler IN
+);
+
+FUNCTION le_result_t CreateSession
+(
+    string brokerURI[MAX_BROKER_URI_LENGTH] IN,
+    string clientId[MAX_CLIENT_ID_LENGTH] IN,
+    Session session OUT
+);
+
+FUNCTION DestroySession
+(
+    Session session IN
+);
+
+FUNCTION SetConnectOptions
+(
+    Session session IN,
+    uint16 keepAliveInterval IN,
+    bool cleanSession IN,
+    // TODO: will message
+    string username[MAX_USERNAME_LENGTH] IN,
+    uint8 password[MAX_PASSWORD_LENGTH] IN,
+    uint16 connectTimeout IN,
+    uint16 retryInterval IN
+);
+
+FUNCTION le_result_t Connect
+(
+    Session session IN
+);
+
+FUNCTION le_result_t Disconnect
+(
+    Session session IN
+);
+
 FUNCTION le_result_t Publish
 (
-    string topic[128] IN,
-    uint8 payload[2048] IN
+    Session session IN,
+    string topic[MAX_TOPIC_LENGTH] IN,
+    uint8 payload[MAX_PAYLOAD_LENGTH] IN,
+    Qos qos IN,
+    bool retain IN
 );
 
-//--------------------------------------------------------------------------------------------------
-/**
- * Handler for session state changes
- */
-//--------------------------------------------------------------------------------------------------
-HANDLER SessionStateHandler
+FUNCTION le_result_t Subscribe
 (
-    bool isConnected IN,       ///< Session State: connected or disconnected
-    int32 connectErrorCode IN, ///< connection returned code
-    int32 subErrorCode         ///< subscribe returned code
+    Session session IN,
+    string topicPattern[MAX_TOPIC_LENGTH] IN,
+    Qos qos IN
 );
 
-//--------------------------------------------------------------------------------------------------
-/**
- * This event provides information on session state changes
- */
-//--------------------------------------------------------------------------------------------------
-EVENT SessionState
+FUNCTION le_result_t Unsubscribe
 (
-    handler           SessionStateHandler
+    Session session IN,
+    string topicPattern[MAX_TOPIC_LENGTH] IN
 );
-
-//--------------------------------------------------------------------------------------------------
-/**
- * Handler for Incoming message
- */
-//--------------------------------------------------------------------------------------------------
-HANDLER IncomingMessageHandler
-(
-    string topicName[128] IN, ///< Name of the subscribed topic
-    string key[128] IN,       ///< Key Name of the data
-    string value[128] IN,     ///< Value of the data
-    string timestamp[16] IN   ///< Timestamp of the data
-);
-
-//--------------------------------------------------------------------------------------------------
-/**
- * This event provides information on the incoming MQTT message
- */
-//--------------------------------------------------------------------------------------------------
-EVENT IncomingMessage
-(
-    handler IncomingMessageHandler
-);
-
