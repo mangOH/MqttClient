@@ -312,7 +312,7 @@ static void mqttClient_onIncomingMessage(mqttClient_msg_data_t* md)
   memcpy(topicName, md->topicName->lenstring.data, md->topicName->lenstring.len);
   topicName[md->topicName->lenstring.len] = 0;
 
-  LE_INFO("---> topic('%s') len(%u) data('%s')", topicName, message->payloadLen, message->payload);
+  LE_INFO("---> topic('%s') len(%zu) data('%s')", topicName, message->payloadLen, message->payload);
 
   payload = malloc(message->payloadLen + 1);
   if (!payload)
