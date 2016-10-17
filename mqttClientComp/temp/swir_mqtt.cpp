@@ -1,9 +1,13 @@
-/*******************************************************************************
- * MQTT class for Sierra Wireless' HL Serie Modules
- * wrapping Paho's MQTTClient and using TCP_HL layer (replacing the default ipstack)
+ /**
+ * @file
  *
- * Nhon Chu - May 2015 - V0.92
- *******************************************************************************/
+ * MQTT class for Sierra Wireless' HL Series Modules wrapping Paho's MQTTClient and using TCP_HL
+ * layer (replacing the default ipstack)
+ *
+ * <HR>
+ *
+ * Copyright (C) Sierra Wireless, Inc. Use of this work is subject to license.
+ */
 
 #include "swir_mqtt.h"
 

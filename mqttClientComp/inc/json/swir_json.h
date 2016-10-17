@@ -1,11 +1,12 @@
 /*
- * swir_json.h
+ * @file
  *
  *	Helper class to deal with JSON payload serialization and deserialization
  *  getValue() method is generic (not specific to AV)... could be placed in a separate class
  *
- *  Created on: June 2015
- *      Author: Nhon Chu
+ * <HR>
+ *
+ * Copyright (C) Sierra Wireless, Inc. Use of this work is subject to license.
  */
 
 #ifndef _SWIR_JSON_H_
@@ -18,6 +19,5 @@ char*		swirjson_fSerialize(char* szKey, float fValue, unsigned long ulTimestamp)
 char*		swirjson_nSerialize(char* szKey, int nValue, unsigned long ulTimestamp);
 char*		swirjson_lstSerialize(char* szKey, int nValueCount, char** pszValueList, unsigned long* pulTimestampList);
 char *		swirjson_getValue(char* szJson, int nKeyIndex, char* szSearchKey);
-
 
 #endif	//_SWIR_JSON_H_

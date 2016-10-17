@@ -1,11 +1,12 @@
 /*
- * swir_json.c
+ * @file
  *
  *	Helper class to deal with JSON payload serialization and deserialization
  *  getValue() method is generic (not specific to AV)... could be placed in a separate class
  *
- *  Created on: June 2015
- *      Author: Nhon Chu
+ * <HR>
+ *
+ * Copyright (C) Sierra Wireless, Inc. Use of this work is subject to license.
  */
 
 #include <stdio.h>

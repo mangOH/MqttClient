@@ -35,7 +35,9 @@
 	Author: Nhon Chu (nchu@sierrawireless.com)
    			March 2015
 
+Copyright (C) Sierra Wireless, Inc. Use of this work is subject to license.
 *******************************************************************************************************************/
+
 
 #include <stdio.h>
 #include "MQTTClient.h"
