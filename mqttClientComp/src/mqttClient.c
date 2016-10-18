@@ -841,7 +841,8 @@ static void mqttClient_socketFdEventHandler(int sockFd, short events)
   }
   else if (events & POLLIN)
   {
-    uint16_t packetType = MQTTPacket_read(clientData->session.rx.buf, sizeof(clientData->session.rx.buf), mqttClient_read);    
+    const int packetType = MQTTPacket_read(
+        clientData->session.rx.buf, sizeof(clientData->session.rx.buf), mqttClient_read);
     LE_DEBUG("packet type(%d)", packetType);
     switch (packetType)
     {
@@ -1416,10 +1417,10 @@ int mqttClient_read(uint8_t* buf, int len)
     {
       LE_WARN("peer closed connection");
       bytes = ret;
-      ret = mqttClient_close(clientData);
+      ret = mqttClient_disconnectData(clientData);
       if (ret)
       {
-        LE_ERROR("mqttClient_close() failed(%d)", ret);
+        LE_ERROR("mqttClient_disconnectData() failed(%d)", ret);
 	goto cleanup;
       }
 
