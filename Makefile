@@ -11,7 +11,7 @@ $(TARGETS):
           mqttClient.adef
 
 paho:
-	$(MAKE) -C paho.mqtt.c
+	CC=$WP85_TOOLCHAIN_DIR/arm-poky-linux-gnueabi-gcc $(MAKE) -C paho.mqtt.c
 
 clean:
 	rm -rf _build_* *.wp85 *.wp85.update
