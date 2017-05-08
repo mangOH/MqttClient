@@ -114,7 +114,9 @@ char * swirjson_getValue(char* szJson, int nKeyIndex, char* szSearchKey)
 	//use case 2 : nKeyIndex > -1 --> search by index, szSearchKey, as output, will be filled with the keyName indexed by nIndexKey
 	char *	pszValue = NULL;
 
-	char	cChar, cOpen, cClose;
+	char	cChar;
+    char	cOpen = JSON_OBJECT_START;
+    char	cClose = JSON_OBJECT_END;
 	int		nState = 0, nPos = 0, nObjectCount = 0;
 	int		nKeyNumber = -1;
 

@@ -19,14 +19,16 @@ static void mqttMain_SigTermEventHandler(int);
 static int mqttMain_SendMessage(const char* key, const char* value)
 {
   char* payload = swirjson_szSerialize(key, value, 0);
+  int rc = -1;
 
-  mqttClient_msg_t msg;
-  msg.qos = mqttClient.session.config.QoS;
-  msg.retained = 0;
-  msg.dup = 0;
-  msg.id = 0;
-  msg.payload = payload;
-  msg.payloadLen = strlen(payload);
+  mqttClient_msg_t msg = {
+    .qos = mqttClient.session.config.QoS,
+    .retained = 0,
+    .dup = 0,
+    .id = 0,
+    .payload = payload,
+    .payloadLen = strlen(payload),
+  };
 
   char* topic = malloc(strlen(MQTT_CLIENT_TOPIC_NAME_PUBLISH) + strlen(mqttClient.deviceId) + 1);
   if (!topic)
@@ -38,7 +40,7 @@ static int mqttMain_SendMessage(const char* key, const char* value)
   sprintf(topic, "%s%s", mqttClient.deviceId, MQTT_CLIENT_TOPIC_NAME_PUBLISH);
   LE_INFO("topic('%s') payload('%s')", topic, payload);
 
-  int rc = mqttClient_publish(&mqttClient, topic, &msg);
+  rc = mqttClient_publish(&mqttClient, topic, &msg);
   if (rc)
   {
     LE_ERROR("mqttClient_publish() failed(%d)", rc);
