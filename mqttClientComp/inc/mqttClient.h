@@ -58,6 +58,13 @@ typedef enum _mqttClient_QoS_e
   MQTT_CLIENT_QOS2, 
 } mqttClient_QoS_e;
 
+typedef enum _mqttClient_dataProvider_e
+{
+  MQTT_CLIENT_DATA_NO_PROVIDER = 0,
+  MQTT_CLIENT_DATA_WIFI,
+  MQTT_CLIENT_DATA_DCS
+} mqttClient_dataProvider_e;
+
 typedef struct _mqttClient_connStateData_t
 {
     bool                               isConnected;
@@ -130,6 +137,12 @@ typedef struct _mqttClient_session_t
 typedef struct _mqttClient_t 
 {
   mqttClient_msg_hndlrs_t              msgHndlrs[MQTT_CLIENT_MAX_MESSAGE_HANDLERS];
+  mqttClient_dataProvider_e            dataProvider;
+  /* WiFI */
+  le_sem_Ref_t                         wifiScanAvailable;
+  le_thread_Ref_t                      wifiScanThread;
+  le_wifiClient_NewEventHandlerRef_t   wifiEventHandlerRef;
+  /* DCS */
   le_data_ConnectionStateHandlerRef_t  dataConnectionState;
   le_data_RequestObjRef_t              requestRef;
   le_event_Id_t                        connStateEvent;

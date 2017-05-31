@@ -20,6 +20,7 @@ requires:
     {
         le_data.api
         modemServices/le_info.api
+        wifi/le_wifiClient.api
         //receiverApi.api
     }
 }
