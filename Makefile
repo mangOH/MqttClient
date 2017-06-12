@@ -1,6 +1,6 @@
 TARGETS := wp85
 
-export MANGOH_ROOT=$(LEGATO_ROOT)/../mangOH
+export MANGOH_ROOT=$(shell pwd)/../..
 
 .PHONY: all $(TARGETS)
 all: $(TARGETS) paho
@@ -11,7 +11,7 @@ $(TARGETS):
           mqttClient.adef
 
 paho:
-	CC=$WP85_TOOLCHAIN_DIR/arm-poky-linux-gnueabi-gcc $(MAKE) -C paho.mqtt.c
+	CC=$(WP85_TOOLCHAIN_DIR)/arm-poky-linux-gnueabi-gcc $(MAKE) -C paho.mqtt.c
 
 clean:
 	rm -rf _build_* *.wp85 *.wp85.update
