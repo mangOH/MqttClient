@@ -1,12 +1,7 @@
 #include "legato.h"
 #include "interfaces.h"
 
-const char mqttBrokerURI[] = "tcp://eu.airvantage.net:1883";
-// TODO: read using API
-const char deviceIMEI[] = "359377060016085";
-const uint8_t mqttPassword[] = {'S', 'W', 'I'};
-const char publishTopic[] = "359377060016085/messages/json";
-
+char deviceIMEI[16];
 mqtt_SessionRef_t mqttSession;
 
 
@@ -16,7 +11,13 @@ void onConnectionLost(void* context)
 }
 
 
-void onMessageArrived(mqtt_MessageRef_t msg, void* context)
+void onMessageArrived
+(
+    const char* topic,
+    const uint8_t* payload,
+    size_t payloadLen,
+    void* context
+)
 {
     LE_FATAL("The publisher received a message!");
 }
@@ -25,29 +26,36 @@ void onMessageArrived(mqtt_MessageRef_t msg, void* context)
 void publishTimerHandler(le_timer_Ref_t timer)
 {
     static int messageData = 0;
-    uint8_t payload[32];
-    sprintf((char*)payload, "{ \"value\": %d}", messageData);
+    uint8_t payload[64];
+    sprintf((char*)payload, "{\"value\":%d}", messageData);
     size_t payloadLen = strlen((char*)payload);
     const bool retain = false;
-    mqtt_Publish(
+    char publishTopic[64];
+    strcpy(publishTopic, deviceIMEI);
+    strcat(publishTopic, "/messages/json");
+    const le_result_t publishResult = mqtt_Publish(
         mqttSession,
         publishTopic,
         payload,
         payloadLen,
         MQTT_QOS0_TRANSMIT_ONCE,
         retain);
-    LE_INFO("Message published with data=%d", messageData);
+    LE_INFO(
+        "Message published with data=%d.  result=%s", messageData, LE_RESULT_TXT(publishResult));
     messageData++;
 }
 
 
 COMPONENT_INIT
 {
+    const char mqttBrokerURI[] = "tcp://eu.airvantage.net:1883";
+    LE_ASSERT_OK(le_info_GetImei(deviceIMEI, NUM_ARRAY_MEMBERS(deviceIMEI)));
     char clientId[32];
     strcpy(clientId, deviceIMEI);
     strcat(clientId, "-pub");
     LE_ASSERT_OK(mqtt_CreateSession(mqttBrokerURI, clientId, &mqttSession));
 
+    const uint8_t mqttPassword[] = {'S', 'W', 'I'};
     const uint16_t keepAliveInSeconds = 60;
     const bool cleanSession = true;
     const char* username = deviceIMEI;
@@ -75,4 +83,3 @@ COMPONENT_INIT
     LE_ASSERT_OK(le_timer_Start(timer));
     LE_INFO("Publish timer started");
 }
-

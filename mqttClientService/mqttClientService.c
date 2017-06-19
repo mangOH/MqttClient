@@ -12,7 +12,8 @@ typedef struct mqtt_Session
     void* messageArrivedHandlerContext;
     mqtt_ConnectionLostHandlerFunc_t connectionLostHandler;
     void* connectionLostHandlerContext;
-    le_sls_Link_t link;
+    // The legato client session that owns this MQTT session
+    le_msg_SessionRef_t clientSession;
 } mqtt_Session;
 
 static int mqtt_QosEnumToValue(mqtt_Qos_t qos);
@@ -21,25 +22,20 @@ static void connectionLostEventHandler(void* report);
 static int mqtt_MessageArrivedHandler(
     void* context, char* topicName, int topicLen, MQTTClient_message* message);
 static void messageReceivedEventHandler(void* report);
+static void mqtt_DestroySessionInternal(mqtt_Session* session);
 
 //--------------------------------------------------------------------------------------------------
 /**
- * sessions is a hashmap from le_msg_SessionRef_t to a le_sls_List_t*.  The list contains nodes of
- * type mqtt_Session.  Each node contains the context of a single MQTT session with a broker.
- *
- * @note
- *      The session data is wholly owned by this module, so we should never leak MQTT related
- *      resources as the result of a client terminating unexpectedly.
+ * Safe ref map for mqtt_Session objects returned to clients.
  */
 //--------------------------------------------------------------------------------------------------
-static le_hashmap_Ref_t sessions;
+static le_ref_MapRef_t SessionRefMap;
 
 //--------------------------------------------------------------------------------------------------
 /**
  * Event id that is used to signal that a message has been received from the MQTT broker.  Events
  * must be used because paho spawns a thread for receiving messages and that means that the
  * callback can't call IPC methods because it is from a non-legato thread.
- * mqttClientService thread 
  */
 //--------------------------------------------------------------------------------------------------
 static le_event_Id_t receiveThreadEventId;
@@ -59,7 +55,8 @@ static le_event_Id_t connectionLostThreadEventId;
 //--------------------------------------------------------------------------------------------------
 typedef struct mqtt_Message
 {
-    mqtt_Session* session;
+    // Safe reference to mqtt_Session
+    mqtt_SessionRef_t session;
     char* topic;
     size_t topicLength;
     uint8_t* payload;
@@ -93,12 +90,12 @@ le_result_t mqtt_CreateSession
     mqtt_SessionRef_t* session  ///< [OUT] The created session if the return result is LE_OK
 )
 {
-    *session = calloc(sizeof(mqtt_Session), 1);
-    LE_ASSERT(*session);
+    mqtt_Session* s = calloc(sizeof(mqtt_Session), 1);
+    LE_ASSERT(s);
     const MQTTClient_connectOptions initConnOpts = MQTTClient_connectOptions_initializer;
-    memcpy(&(*session)->connectOptions, &initConnOpts, sizeof(MQTTClient_connectOptions));
+    memcpy(&(s->connectOptions), &initConnOpts, sizeof(MQTTClient_connectOptions));
     const int createResult = MQTTClient_create(
-            &(*session)->client,
+            &(s->client),
             brokerURI,
             clientId,
             MQTTCLIENT_PERSISTENCE_NONE,
@@ -106,34 +103,25 @@ le_result_t mqtt_CreateSession
     if (createResult != MQTTCLIENT_SUCCESS)
     {
         LE_ERROR("Couldn't create MQTT session.  Paho error code: %d", createResult);
-        free(*session);
-        *session = NULL;
+        free(s);
         return LE_FAULT;
     }
 
     le_msg_SessionRef_t clientSession = mqtt_GetClientSessionRef();
-    le_sls_List_t* mqttSessionsForClient = le_hashmap_Get(sessions, clientSession);
-    if (mqttSessionsForClient == NULL)
-    {
-        // There are no MQTT sessions for this client session
-        mqttSessionsForClient = calloc(sizeof(le_sls_List_t), 1);
-        LE_ASSERT(mqttSessionsForClient);
-        *mqttSessionsForClient = LE_SLS_LIST_INIT;
-        LE_FATAL_IF(
-            le_hashmap_Put(sessions, clientSession, mqttSessionsForClient) != NULL,
-            "There should not be an element in the map with this key");
-    }
-    le_sls_Queue(mqttSessionsForClient, &(*session)->link);
+    s->clientSession = clientSession;
+
+    *session = le_ref_CreateRef(SessionRefMap, s);
 
     LE_ASSERT(MQTTClient_setCallbacks(
-            (*session)->client,
-            (*session),
+            s->client,
+            *session,
             &mqtt_ConnectionLostHandler,
             &mqtt_MessageArrivedHandler,
             NULL) == MQTTCLIENT_SUCCESS);
 
     return LE_OK;
 }
+
 
 //--------------------------------------------------------------------------------------------------
 /**
@@ -149,41 +137,30 @@ void mqtt_DestroySession
     mqtt_SessionRef_t session  ///< Session to destroy
 )
 {
-    le_msg_SessionRef_t clientSession = mqtt_GetClientSessionRef();
-    le_sls_List_t* mqttSessionsForClient = le_hashmap_Get(sessions, clientSession);
-    if (mqttSessionsForClient == NULL)
+    mqtt_Session* s = le_ref_Lookup(SessionRefMap, session);
+    if (s == NULL)
     {
-        LE_KILL_CLIENT("Tried to destroy a sessions, but there are no sessions for this client");
+        LE_KILL_CLIENT("Session doesn't exist");
+        return;
+    }
+    if (s->clientSession != mqtt_GetClientSessionRef())
+    {
+        LE_KILL_CLIENT("Session doesn't belong to this client");
+        return;
     }
 
-    le_sls_Link_t* prevListLink = NULL;
-    le_sls_Link_t* listLink = le_sls_Peek(mqttSessionsForClient);
-    while (true)
-    {
-        if (listLink == NULL)
-        {
-            LE_KILL_CLIENT("Tried to destroy a session that doesn't exist for this client");
-            break;
-        }
-        mqtt_Session* s = CONTAINER_OF(listLink, mqtt_Session, link);
-        if (s == session)
-        {
-            // s is the session we want to remove
-            le_sls_Link_t* removedLink = (prevListLink == NULL) ?
-                le_sls_Pop(mqttSessionsForClient) :
-                le_sls_RemoveAfter(mqttSessionsForClient, prevListLink);
-            LE_ASSERT(removedLink != NULL);
-            // s (a.k.a. session) contain removedLink, so no need to do CONTAINER_OF on removedLInk
-            MQTTClient_destroy(s->client);
-            // It is necessary to cast to char* from const char* in order to free the memory
-            // associated with the username and password.
-            free((char*)s->connectOptions.username);
-            free((char*)s->connectOptions.password);
-            free(s);
-        }
-        prevListLink = listLink;
-        listLink = le_sls_PeekNext(mqttSessionsForClient, listLink);
-    }
+    mqtt_DestroySessionInternal(s);
+    le_ref_DeleteRef(SessionRefMap, session);
+}
+
+static void mqtt_DestroySessionInternal(mqtt_Session* session)
+{
+    MQTTClient_destroy(session->client);
+    // It is necessary to cast to char* from const char* in order to free the memory
+    // associated with the username and password.
+    free((char*)session->connectOptions.username);
+    free((char*)session->connectOptions.password);
+    free(session);
 }
 
 //--------------------------------------------------------------------------------------------------
@@ -205,24 +182,36 @@ void mqtt_SetConnectOptions
     uint16_t retryInterval      ///< [IN] retry interval in seconds
 )
 {
-    session->connectOptions.keepAliveInterval = keepAliveInterval;
-    session->connectOptions.cleansession = cleanSession;
+    mqtt_Session* s = le_ref_Lookup(SessionRefMap, session);
+    if (s == NULL)
+    {
+        LE_KILL_CLIENT("Session doesn't exist");
+        return;
+    }
+    if (s->clientSession != mqtt_GetClientSessionRef())
+    {
+        LE_KILL_CLIENT("Session doesn't belong to this client");
+        return;
+    }
+
+    s->connectOptions.keepAliveInterval = keepAliveInterval;
+    s->connectOptions.cleansession = cleanSession;
 
     // username
-    free((char*)session->connectOptions.username);
+    free((char*)s->connectOptions.username);
     if (username != NULL)
     {
-        session->connectOptions.username = calloc(strlen(username) + 1, 1);
-        LE_ASSERT(session->connectOptions.username != NULL);
-        strcpy((char*)session->connectOptions.username, username);
+        s->connectOptions.username = calloc(strlen(username) + 1, 1);
+        LE_ASSERT(s->connectOptions.username != NULL);
+        strcpy((char*)s->connectOptions.username, username);
     }
     else
     {
-        session->connectOptions.username = NULL;
+        s->connectOptions.username = NULL;
     }
 
     // password
-    free((char*)session->connectOptions.password);
+    free((char*)s->connectOptions.password);
     if (password != NULL)
     {
         // paho uses null terminated strings for passwords, so the password may not contain any
@@ -237,22 +226,22 @@ void mqtt_SetConnectOptions
                 break;
             }
         }
-        session->connectOptions.password = calloc(passwordLength + 1, 1);
-        LE_ASSERT(session->connectOptions.password != NULL);
-        memcpy((uint8_t*)session->connectOptions.password, password, passwordLength);
-        ((uint8_t*)session->connectOptions.password)[passwordLength] = '\0';
+        s->connectOptions.password = calloc(passwordLength + 1, 1);
+        LE_ASSERT(s->connectOptions.password != NULL);
+        memcpy((uint8_t*)s->connectOptions.password, password, passwordLength);
+        ((uint8_t*)s->connectOptions.password)[passwordLength] = '\0';
     }
     else
     {
-        session->connectOptions.password = NULL;
+        s->connectOptions.password = NULL;
         if (username != NULL)
         {
             LE_KILL_CLIENT("It is illegal to specify a password without a username");
         }
     }
 
-    session->connectOptions.connectTimeout = connectTimeout;
-    session->connectOptions.retryInterval = retryInterval;
+    s->connectOptions.connectTimeout = connectTimeout;
+    s->connectOptions.retryInterval = retryInterval;
 }
 
 //--------------------------------------------------------------------------------------------------
@@ -270,7 +259,19 @@ le_result_t mqtt_Connect
     mqtt_SessionRef_t session
 )
 {
-    const int connectResult = MQTTClient_connect(session->client, &session->connectOptions);
+    mqtt_Session* s = le_ref_Lookup(SessionRefMap, session);
+    if (s == NULL)
+    {
+        LE_KILL_CLIENT("Session doesn't exist");
+        return LE_FAULT;
+    }
+    if (s->clientSession != mqtt_GetClientSessionRef())
+    {
+        LE_KILL_CLIENT("Session doesn't belong to this client");
+        return LE_FAULT;
+    }
+
+    const int connectResult = MQTTClient_connect(s->client, &s->connectOptions);
     le_result_t result;
     switch (connectResult)
     {
@@ -316,8 +317,20 @@ le_result_t mqtt_Disconnect
     mqtt_SessionRef_t session
 )
 {
+    mqtt_Session* s = le_ref_Lookup(SessionRefMap, session);
+    if (s == NULL)
+    {
+        LE_KILL_CLIENT("Session doesn't exist");
+        return LE_FAULT;
+    }
+    if (s->clientSession != mqtt_GetClientSessionRef())
+    {
+        LE_KILL_CLIENT("Session doesn't belong to this client");
+        return LE_FAULT;
+    }
+
     const int waitBeforeDisconnectMs = 0;
-    const int disconnectResult = MQTTClient_disconnect(session->client, waitBeforeDisconnectMs);
+    const int disconnectResult = MQTTClient_disconnect(s->client, waitBeforeDisconnectMs);
     le_result_t result;
     switch (disconnectResult)
     {
@@ -361,9 +374,21 @@ le_result_t mqtt_Publish
     bool retain
 )
 {
+    mqtt_Session* s = le_ref_Lookup(SessionRefMap, session);
+    if (s == NULL)
+    {
+        LE_KILL_CLIENT("Session doesn't exist");
+        return LE_FAULT;
+    }
+    if (s->clientSession != mqtt_GetClientSessionRef())
+    {
+        LE_KILL_CLIENT("Session doesn't belong to this client");
+        return LE_FAULT;
+    }
+
     MQTTClient_deliveryToken* dtNotUsed = NULL;
     const int publishResult = MQTTClient_publish(
-        session->client, topic, payloadLen, (void*)payload, mqtt_QosEnumToValue(qos), retain, dtNotUsed);
+        s->client, topic, payloadLen, (void*)payload, mqtt_QosEnumToValue(qos), retain, dtNotUsed);
     le_result_t result = LE_OK;
     if (publishResult != MQTTCLIENT_SUCCESS)
     {
@@ -392,7 +417,19 @@ le_result_t mqtt_Subscribe
     mqtt_Qos_t qos
 )
 {
-    const int subscribeResult = MQTTClient_subscribe(session->client, topicPattern, qos);
+    mqtt_Session* s = le_ref_Lookup(SessionRefMap, session);
+    if (s == NULL)
+    {
+        LE_KILL_CLIENT("Session doesn't exist");
+        return LE_FAULT;
+    }
+    if (s->clientSession != mqtt_GetClientSessionRef())
+    {
+        LE_KILL_CLIENT("Session doesn't belong to this client");
+        return LE_FAULT;
+    }
+
+    const int subscribeResult = MQTTClient_subscribe(s->client, topicPattern, qos);
     le_result_t result = LE_OK;
     if (subscribeResult != MQTTCLIENT_SUCCESS)
     {
@@ -417,6 +454,18 @@ le_result_t mqtt_Unsubscribe
     const char* topicPattern
 )
 {
+    mqtt_Session* s = le_ref_Lookup(SessionRefMap, session);
+    if (s == NULL)
+    {
+        LE_KILL_CLIENT("Session doesn't exist");
+        return LE_FAULT;
+    }
+    if (s->clientSession != mqtt_GetClientSessionRef())
+    {
+        LE_KILL_CLIENT("Session doesn't belong to this client");
+        return LE_FAULT;
+    }
+
     const int unsubscribeResult = MQTTClient_unsubscribe(session->client, topicPattern);
     le_result_t result = LE_OK;
     if (unsubscribeResult != MQTTCLIENT_SUCCESS)
@@ -446,17 +495,30 @@ mqtt_ConnectionLostHandlerRef_t mqtt_AddConnectionLostHandler
     void* context
 )
 {
-    if (session->connectionLostHandler != NULL)
+    mqtt_Session* s = le_ref_Lookup(SessionRefMap, session);
+    if (s == NULL)
+    {
+        LE_KILL_CLIENT("Session doesn't exist");
+        return NULL;
+    }
+    if (s->clientSession != mqtt_GetClientSessionRef())
+    {
+        LE_KILL_CLIENT("Session doesn't belong to this client");
+        return NULL;
+    }
+
+    if (s->connectionLostHandler != NULL)
     {
         LE_KILL_CLIENT("You may only register one connection lost handler");
+        return NULL;
     }
     else
     {
-        session->connectionLostHandler = handler;
-        session->connectionLostHandlerContext = context;
+        s->connectionLostHandler = handler;
+        s->connectionLostHandlerContext = context;
     }
 
-    return (mqtt_ConnectionLostHandlerRef_t)session;
+    return (mqtt_ConnectionLostHandlerRef_t)s;
 }
 
 //--------------------------------------------------------------------------------------------------
@@ -469,9 +531,20 @@ void mqtt_RemoveConnectionLostHandler
     mqtt_ConnectionLostHandlerRef_t handler
 )
 {
-    mqtt_Session* session = (mqtt_Session*)handler;
-    session->connectionLostHandler = NULL;
-    session->connectionLostHandlerContext = NULL;
+    mqtt_Session* s = le_ref_Lookup(SessionRefMap, handler);
+    if (s == NULL)
+    {
+        LE_KILL_CLIENT("Session doesn't exist");
+        return;
+    }
+    if (s->clientSession != mqtt_GetClientSessionRef())
+    {
+        LE_KILL_CLIENT("Session doesn't belong to this client");
+        return;
+    }
+
+    s->connectionLostHandler = NULL;
+    s->connectionLostHandlerContext = NULL;
 }
 
 //--------------------------------------------------------------------------------------------------
@@ -492,17 +565,30 @@ mqtt_MessageArrivedHandlerRef_t mqtt_AddMessageArrivedHandler
     void* context
 )
 {
-    if (session->messageArrivedHandler != NULL)
+    mqtt_Session* s = le_ref_Lookup(SessionRefMap, session);
+    if (s == NULL)
     {
-        LE_KILL_CLIENT("You may only register one message arrived handler");
+        LE_KILL_CLIENT("Session doesn't exist");
+        return NULL;
+    }
+    if (s->clientSession != mqtt_GetClientSessionRef())
+    {
+        LE_KILL_CLIENT("Session doesn't belong to this client");
+        return NULL;
+    }
+
+    if (s->messageArrivedHandler != NULL)
+    {
+        LE_KILL_CLIENT("You may only register one message arrived handler per session");
+        return NULL;
     }
     else
     {
-        session->messageArrivedHandler = handler;
-        session->messageArrivedHandlerContext = context;
+        s->messageArrivedHandler = handler;
+        s->messageArrivedHandlerContext = context;
     }
 
-    return (mqtt_MessageArrivedHandlerRef_t)session;
+    return (mqtt_MessageArrivedHandlerRef_t)s;
 }
 
 //--------------------------------------------------------------------------------------------------
@@ -515,46 +601,22 @@ void mqtt_RemoveMessageArrivedHandler
     mqtt_MessageArrivedHandlerRef_t handler
 )
 {
-    mqtt_Session* session = (mqtt_Session*)handler;
-    session->messageArrivedHandler = NULL;
-    session->messageArrivedHandlerContext = NULL;
+    mqtt_Session* s = le_ref_Lookup(SessionRefMap, handler);
+    if (s == NULL)
+    {
+        LE_KILL_CLIENT("Session doesn't exist");
+        return;
+    }
+    if (s->clientSession != mqtt_GetClientSessionRef())
+    {
+        LE_KILL_CLIENT("Session doesn't belong to this client");
+        return;
+    }
+
+    s->messageArrivedHandler = NULL;
+    s->messageArrivedHandlerContext = NULL;
 }
 
-//--------------------------------------------------------------------------------------------------
-/**
- * Extracts the topic and payload from a message reference.
- */
-//--------------------------------------------------------------------------------------------------
-void mqtt_GetMessage
-(
-    mqtt_MessageRef_t message, ///< [IN] Message to extract the data from
-    char* topic,               ///< [OUT] Topic of the message
-    size_t topicLength,        ///< [IN] Length of the buffer allocated to topic
-    uint8_t* payload,          ///< [OUT] Payload of the message
-    size_t* payloadLength      ///< [IN/OUT] As input, the size of the payload buffer.  As output,
-                               ///  the number of bytes of the payload buffer that are valid.
-)
-{
-    if (message->topicLength > topicLength)
-    {
-        LE_KILL_CLIENT("topic buffer is too small");
-        goto done;
-    }
-    memcpy(topic, message->topic, message->topicLength);
-
-    if (message->payloadLength > *payloadLength)
-    {
-        LE_KILL_CLIENT("payload buffer is too small");
-        goto done;
-    }
-    memcpy(payload, message->payload, message->payloadLength);
-    *payloadLength = message->payloadLength;
-
-done:
-    free(message->topic);
-    free(message->payload);
-    free(message);
-}
 
 //--------------------------------------------------------------------------------------------------
 /**
@@ -606,8 +668,7 @@ static void mqtt_ConnectionLostHandler
     char* cause    ///< paho library doesn't currently populate this
 )
 {
-    mqtt_Session* session = context;
-    le_event_Report(connectionLostThreadEventId, &session, sizeof(mqtt_Session*));
+    le_event_Report(connectionLostThreadEventId, &context, sizeof(void*));
 }
 
 //--------------------------------------------------------------------------------------------------
@@ -618,10 +679,16 @@ static void mqtt_ConnectionLostHandler
 //--------------------------------------------------------------------------------------------------
 static void connectionLostEventHandler(void* report)
 {
-    mqtt_Session* session = *((mqtt_Session**)report);
-    if (session->connectionLostHandler != NULL)
+    mqtt_Session* s = le_ref_Lookup(SessionRefMap, report);
+    if (s == NULL)
     {
-        session->connectionLostHandler(session->connectionLostHandlerContext);
+        LE_KILL_CLIENT("Session doesn't exist");
+        return;
+    }
+
+    if (s->connectionLostHandler != NULL)
+    {
+        s->connectionLostHandler(s->connectionLostHandlerContext);
     }
     else
     {
@@ -644,17 +711,18 @@ static int mqtt_MessageArrivedHandler
     MQTTClient_message* message
 )
 {
-    // TODO: this isn't really safe because the session could possibly be destroyed by
-    // mqtt_DestroySession() before this function is called.
-    mqtt_Session* session = context;
+    mqtt_Session* s = le_ref_Lookup(SessionRefMap, context);
+    if (s == NULL)
+    {
+        LE_WARN("Session doesn't exist");
+        return true;
+    }
 
-    // NOTE: We are dynamically allocating memory that will only be free *if* the client calls 
-    // mqtt_GetMessage to get this message.  This should be fixed once legato allows handlers to
-    // take arrays as parameters.
     mqtt_Message* storedMsg = calloc(sizeof(mqtt_Message), 1);
     LE_ASSERT(storedMsg);
 
-    storedMsg->session = session;
+    LE_INFO("MessageArrivedHandler called for topic=%s. Storing session=0x%p", topicName, context);
+    storedMsg->session = context;
 
     // When topicLen is 0 it means that the topic contains embedded nulls and can't be treated as a
     // normal C string
@@ -674,6 +742,7 @@ static int mqtt_MessageArrivedHandler
     return messageReceivedSuccessfully;
 }
 
+
 //--------------------------------------------------------------------------------------------------
 /**
  * The event handler for the message arrived event that is generated by mqtt_MessageArrivedHandler.
@@ -684,25 +753,60 @@ static void messageReceivedEventHandler(void* report)
 {
     mqtt_Message* storedMsg = *((mqtt_Message**)report);
 
-    if (storedMsg->topicLength > MQTT_MAX_TOPIC_LENGTH ||
-        storedMsg->payloadLength > MQTT_MAX_PAYLOAD_LENGTH)
+    mqtt_Session* s = le_ref_Lookup(SessionRefMap, storedMsg->session);
+    if (s == NULL)
     {
-        LE_WARN("Message arrived from broker, but it is too large to deliver using Legato IPC");
+        LE_WARN("Session lookup failed for session=0x%p", storedMsg->session);
+        return;
     }
-    else
+
+    if (s->messageArrivedHandler != NULL)
     {
-        if (storedMsg->session->messageArrivedHandler != NULL)
+        if (storedMsg->topicLength <= MQTT_MAX_TOPIC_LENGTH &&
+            storedMsg->payloadLength <= MQTT_MAX_PAYLOAD_LENGTH)
         {
-            storedMsg->session->messageArrivedHandler(
-                storedMsg, storedMsg->session->messageArrivedHandlerContext);
+            s->messageArrivedHandler(
+                storedMsg->topic,
+                storedMsg->payload,
+                storedMsg->payloadLength,
+                s->messageArrivedHandlerContext);
         }
         else
         {
             LE_WARN(
-                "Message has arrived, but no handler is registered to receive the notification");
-            free(storedMsg->topic);
-            free(storedMsg->payload);
-            free(storedMsg);
+                "Message arrived from broker, but it is too large to deliver using Legato IPC - "
+                "topicLength=%zu, payloadLength=%zu",
+                storedMsg->topicLength,
+                storedMsg->payloadLength);
+        }
+    }
+    else
+    {
+        LE_WARN(
+            "Message has arrived, but no handler is registered to receive the notification");
+    }
+
+    free(storedMsg->topic);
+    free(storedMsg->payload);
+    free(storedMsg);
+}
+
+static void DestroyAllOwnedSessions(le_msg_SessionRef_t sessionRef, void* context)
+{
+    le_ref_IterRef_t it = le_ref_GetIterator(SessionRefMap);
+    le_result_t iterRes = le_ref_NextNode(it);
+    while (iterRes == LE_OK)
+    {
+        mqtt_Session* s = le_ref_GetValue(it);
+        LE_ASSERT(s != NULL);
+        mqtt_SessionRef_t sRef = (mqtt_SessionRef_t)(le_ref_GetSafeRef(it));
+        LE_ASSERT(sRef != NULL);
+        // Advance the interator before deletion to prevent invalidation
+        iterRes = le_ref_NextNode(it);
+        if (s->clientSession == sessionRef)
+        {
+            mqtt_DestroySessionInternal(s);
+            le_ref_DeleteRef(SessionRefMap, sRef);
         }
     }
 }
@@ -710,12 +814,7 @@ static void messageReceivedEventHandler(void* report)
 
 COMPONENT_INIT
 {
-    const size_t initialCapacity = 4;
-    sessions = le_hashmap_Create(
-        "MQTT Sessions",
-        initialCapacity,
-        le_hashmap_HashVoidPointer,
-        le_hashmap_EqualsVoidPointer);
+    SessionRefMap = le_ref_CreateMap("MQTT sessions", 16);
 
     receiveThreadEventId = le_event_CreateId(
         "MqttClient receive notification", sizeof(mqtt_Message*));
@@ -728,4 +827,6 @@ COMPONENT_INIT
         "MqttClient connection lost notification",
         connectionLostThreadEventId,
         connectionLostEventHandler);
+
+    le_msg_AddServiceCloseHandler(mqtt_GetServiceRef(), DestroyAllOwnedSessions, NULL);
 }

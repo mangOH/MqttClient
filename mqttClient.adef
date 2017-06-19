@@ -61,8 +61,10 @@ requires:
 
 bindings:
 {
-    //testPublisher.testPublisher.mqtt -> mqttClientService.mqttClientService.mqtt
-    //testSubscriber.testSubscriber.mqtt -> mqttClientService.mqttClientService.mqtt
+    //testPublisher.testPublisher.mqtt      -> mqttClientService.mqttClientService.mqtt
+    //testPublisher.testPublisher.le_info   -> modemService.le_info
+    //testSubscriber.testSubscriber.mqtt    -> mqttClientService.mqttClientService.mqtt
+    //testSubscriber.testSubscriber.le_info -> modemService.le_info
 }
 
 extern:

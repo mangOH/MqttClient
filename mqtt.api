@@ -24,29 +24,10 @@ EVENT ConnectionLost
     ConnectionLostHandler handler IN
 );
 
-/*
- * NOTE: This version is not possible because Legato 16.04 doesn't support arrays as handler
- * parameters.
 HANDLER MessageArrivedHandler
 (
     string topic[MAX_TOPIC_LENGTH] IN,
     uint8 payload[MAX_PAYLOAD_LENGTH] IN
-);
-*/
-
-REFERENCE Message;
-
-// Temporary API until Legato is enhanced to support arrays as handler parameters
-HANDLER MessageArrivedHandler
-(
-    Message message IN
-);
-
-FUNCTION GetMessage
-(
-    Message message IN,
-    string topic[MAX_TOPIC_LENGTH] OUT,
-    uint8 payload[MAX_PAYLOAD_LENGTH] OUT
 );
 
 EVENT MessageArrived

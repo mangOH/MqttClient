@@ -7,7 +7,7 @@ all: $(TARGETS) paho
 
 $(TARGETS):
 	export TARGET=$@ ; \
-	mkapp -v -t $@ \
+	mkapp -v -t $@ -i $(LEGATO_ROOT)/interfaces \
           mqttClient.adef
 
 paho:
