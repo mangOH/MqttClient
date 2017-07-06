@@ -28,6 +28,30 @@
 #define JSON_ARRAY_START		'['
 #define JSON_ARRAY_END			']'
 
+static void trim(char *input)
+{
+   char *dst = input, *src = input;
+   char *end;
+
+   /* Skip whitespace at front... */
+   while (isspace((unsigned char)*src))
+   {
+      ++src;
+   }
+
+   /* Trim at end... */
+   end = src + strlen(src) - 1;
+   while (end > src && isspace((unsigned char)*end))
+   {
+      *end-- = 0;
+   }
+
+   /* Move if needed. */
+   if (src != dst)
+   {
+      while ((*dst++ = *src++));
+   }
+}
 
 char* swirjson_szSerialize(const char* szKey, const char* szValue, unsigned long ulTimestamp)
 {
@@ -259,12 +283,13 @@ char * swirjson_getValue(char* szJson, int nKeyIndex, char* szSearchKey)
 
 		if (bFound)
 		{
-			if (nValEndPos > nValStartPos)
+            if (nValEndPos >= nValStartPos)
 			{
 				int nLen = nValEndPos - nValStartPos + 1;
 				pszValue = (char *) malloc(nLen + 1);
 				memset(pszValue, 0, nLen + 1);
 				memcpy(pszValue, szJson+nValStartPos, nLen);
+                trim(pszValue);
 			}
 			else
 			{
