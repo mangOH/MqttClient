@@ -19,6 +19,9 @@ _build_*
 .settings
 package.properties
 wmnew.opt
+/Target_Legato_Debug/
+/Target_Legato_Release/
+*/inc-gen/
 
 # KDev4
 *.kdev4
