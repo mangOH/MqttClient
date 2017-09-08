@@ -34,6 +34,6 @@ provides:
 {
     api:
     {
-        mqtt.api
+        ${CURDIR}/../mqtt.api
     }
 }
