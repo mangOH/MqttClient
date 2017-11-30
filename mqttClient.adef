@@ -16,8 +16,8 @@ bundles:
 executables:
 {
     mqttClientService   = (mqttClientService)
-    //testPublisher       = (testPublisher)
-    //testSubscriber      = (testSubscriber)
+    testPublisher       = (testPublisher)
+    testSubscriber      = (testSubscriber)
 }
 
 processes:
@@ -42,33 +42,15 @@ processes:
     faultAction: restart
 }
 
-requires:
-{
-    file:
-    {
-        /usr/bin/strace             /bin/
-        /usr/lib/libssl.so          /lib/
-        /usr/lib/libssl.so.1.0.0    /lib/
-        /lib/libcrypto.so           /lib/
-        /lib/libcrypto.so.1.0.0     /lib/
-        /lib/libnss_dns.so.2        /lib/
-        /lib/libnss_dns-2.20.so     /lib/
-        /lib/libresolv.so.2         /lib/
-        /lib/libresolv-2.20.so      /lib/
-    }
-}
-
-
 bindings:
 {
-    //testPublisher.testPublisher.mqtt      -> mqttClientService.mqttClientService.mqtt
-    //testPublisher.testPublisher.le_info   -> modemService.le_info
-    //testSubscriber.testSubscriber.mqtt    -> mqttClientService.mqttClientService.mqtt
-    //testSubscriber.testSubscriber.le_info -> modemService.le_info
+    testPublisher.testPublisher.mqtt      -> mqttClientService.mqttClientService.mqtt
+    testPublisher.testPublisher.le_info   -> modemService.le_info
+    testSubscriber.testSubscriber.mqtt    -> mqttClientService.mqttClientService.mqtt
+    testSubscriber.testSubscriber.le_info -> modemService.le_info
 }
 
 extern:
 {
     mqttClientService.mqttClientService.mqtt
 }
-

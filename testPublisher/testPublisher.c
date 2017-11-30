@@ -48,7 +48,7 @@ void publishTimerHandler(le_timer_Ref_t timer)
 
 COMPONENT_INIT
 {
-    const char mqttBrokerURI[] = "tcp://eu.airvantage.net:1883";
+    const char mqttBrokerURI[] = "ssl://eu.airvantage.net:8883";
     LE_ASSERT_OK(le_info_GetImei(deviceIMEI, NUM_ARRAY_MEMBERS(deviceIMEI)));
     char clientId[32];
     strcpy(clientId, deviceIMEI);
@@ -59,8 +59,8 @@ COMPONENT_INIT
     const uint16_t keepAliveInSeconds = 60;
     const bool cleanSession = true;
     const char* username = deviceIMEI;
-    uint16_t connectTimeout = 20;
-    uint16_t retryInterval = 10;
+    const uint16_t connectTimeout = 20;
+    const uint16_t retryInterval = 10;
     mqtt_SetConnectOptions(
         mqttSession,
         keepAliveInSeconds,

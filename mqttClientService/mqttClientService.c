@@ -4,10 +4,13 @@
 #include "MQTTClient.h"
 #include "Socket.h"
 
+static const char *SslCaCertsPath = "/etc/ssl/certs/ca-certificates.crt";
+
 typedef struct mqtt_Session
 {
     MQTTClient client;
     MQTTClient_connectOptions connectOptions;
+    MQTTClient_SSLOptions sslOptions;
     mqtt_MessageArrivedHandlerFunc_t messageArrivedHandler;
     void* messageArrivedHandlerContext;
     mqtt_ConnectionLostHandlerFunc_t connectionLostHandler;
@@ -70,13 +73,6 @@ typedef struct mqtt_Message
  *
  * @return
  *      LE_OK on success or LE_FAULT on failure
- *
- * @note
- *      SSL support has not been tested and will not work until the SSL options are setup correctly
- *      by mqtt_SetConnectOptions().  I believe we will have to bundle certificate files into the
- *      app as part of this exercise.  It seems that the ssl options structure wants a filesystem
- *      path to a single .pem file, but there are 168 .pem files in /etc/ssl/certs.  Which one
- *      should we provide?
  */
 //--------------------------------------------------------------------------------------------------
 le_result_t mqtt_CreateSession
@@ -93,7 +89,12 @@ le_result_t mqtt_CreateSession
     mqtt_Session* s = calloc(sizeof(mqtt_Session), 1);
     LE_ASSERT(s);
     const MQTTClient_connectOptions initConnOpts = MQTTClient_connectOptions_initializer;
-    memcpy(&(s->connectOptions), &initConnOpts, sizeof(MQTTClient_connectOptions));
+    memcpy(&(s->connectOptions), &initConnOpts, sizeof(initConnOpts));
+
+    const MQTTClient_SSLOptions initSslOpts = MQTTClient_SSLOptions_initializer;
+    memcpy(&(s->sslOptions), &initSslOpts, sizeof(initSslOpts));
+    s->sslOptions.trustStore = SslCaCertsPath;
+
     const int createResult = MQTTClient_create(
             &(s->client),
             brokerURI,
@@ -242,6 +243,7 @@ void mqtt_SetConnectOptions
 
     s->connectOptions.connectTimeout = connectTimeout;
     s->connectOptions.retryInterval = retryInterval;
+    s->connectOptions.ssl = &s->sslOptions;
 }
 
 //--------------------------------------------------------------------------------------------------
@@ -829,4 +831,8 @@ COMPONENT_INIT
         connectionLostEventHandler);
 
     le_msg_AddServiceCloseHandler(mqtt_GetServiceRef(), DestroyAllOwnedSessions, NULL);
+
+    MQTTClient_init_options initOptions = MQTTClient_init_options_initializer;
+    initOptions.do_openssl_init = 1;
+    MQTTClient_global_init(&initOptions);
 }
