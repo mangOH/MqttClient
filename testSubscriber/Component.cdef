@@ -7,7 +7,7 @@ requires:
 {
     api:
     {
-        ${MANGOH_ROOT}/apps/MqttClient/mqtt.api
+        mqtt.api
         modemServices/le_info.api
     }
 }
