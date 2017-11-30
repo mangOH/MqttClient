@@ -6,13 +6,13 @@ OBJECTS=$(SOURCES:.c=.o)
 EXECUTABLE=test_swir_json
 
 all: $(SOURCES) $(EXECUTABLE)
-	
-$(EXECUTABLE): $(OBJECTS) 
-	$(CC) $(OBJECTS) -o $@ $(LDFLAGS) 
+
+$(EXECUTABLE): $(OBJECTS)
+	$(CC) $(OBJECTS) -o $@ $(LDFLAGS)
 
 .c.o:
 	$(CC) $(CFLAGS) $< -o $@
 
 clean:
-	rm -f $(OBJECTS) 
+	rm -f $(OBJECTS)
 	rm -f $(EXECUTABLE)

@@ -91,9 +91,9 @@ void ParseMessage(char* payload)
     }
 
     if (isValid) {
-    	INFO("Message valid");
+        INFO("Message valid");
     } else {
-    	ERROR("Message invalid");
+        ERROR("Message invalid");
     }
 
 cleanup:
@@ -157,25 +157,17 @@ cleanup:
 /*------------------------------------------------------------------------------*/
 int main(int argc, char *argv[])
 {
-#if 1
-	DEBUG("%s", MSG_1);
-	ParseMessage(MSG_1);
-#endif
+    DEBUG("%s", MSG_1);
+    ParseMessage(MSG_1);
 
-#if 1
-	DEBUG("%s", MSG_2);
-	ParseMessage(MSG_2);
-#endif
+    DEBUG("%s", MSG_2);
+    ParseMessage(MSG_2);
 
-#if 1
-	DEBUG("%s", MSG_3);
-	ParseMessage(MSG_3);
-#endif
+    DEBUG("%s", MSG_3);
+    ParseMessage(MSG_3);
 
-#if 1
-	DEBUG("%s", MSG_4);
-	ParseMessage(MSG_4);
-#endif
+    DEBUG("%s", MSG_4);
+    ParseMessage(MSG_4);
 
     return 0;
 }
