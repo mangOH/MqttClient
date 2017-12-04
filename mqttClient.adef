@@ -2,16 +2,6 @@ version: 2.0
 sandboxed: true
 start: auto
 
-bundles:
-{
-    file:
-    {
-        paho.mqtt.c/build/output/libpaho-mqtt3cs.so     /lib/
-        paho.mqtt.c/build/output/libpaho-mqtt3cs.so.1   /lib/
-        paho.mqtt.c/build/output/libpaho-mqtt3cs.so.1.0 /lib/
-        resolv.conf                                     /etc/
-    }
-}
 
 executables:
 {

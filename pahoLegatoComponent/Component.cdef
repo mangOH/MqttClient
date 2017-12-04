@@ -1,0 +1,41 @@
+requires:
+{
+    dir:
+    {
+        /etc/ssl /etc/ssl
+    }
+
+    device:
+    {
+        [r] /dev/urandom /dev/urandom
+    }
+
+    file:
+    {
+        /usr/lib/ssl/openssl.cnf    /usr/lib/ssl/
+        /usr/lib/libssl.so          /usr/lib/
+        /usr/lib/libssl.so.1.0.0    /usr/lib/
+        /lib/libcrypto.so           /lib/
+        /lib/libcrypto.so.1.0.0     /lib/
+        /lib/libnss_dns.so.2        /lib/
+        /lib/libnss_dns-2.20.so     /lib/
+        /lib/libresolv.so.2         /lib/
+        /lib/libresolv-2.20.so      /lib/
+    }
+}
+
+bundles:
+{
+    file:
+    {
+        paho.mqtt.c/build/output/libpaho-mqtt3cs.so     /lib/
+        paho.mqtt.c/build/output/libpaho-mqtt3cs.so.1   /lib/
+        paho.mqtt.c/build/output/libpaho-mqtt3cs.so.1.0 /lib/
+        resolv.conf                                     /etc/
+    }
+}
+
+externalBuild:
+{
+    "make -C ${CURDIR}/paho.mqtt.c"
+}

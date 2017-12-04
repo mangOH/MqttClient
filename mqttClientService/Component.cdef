@@ -6,40 +6,27 @@ sources:
 
 requires:
 {
-    dir:
+    component:
     {
-        /etc/ssl /etc/ssl
+        pahoLegatoComponent
     }
-
-    device:
+    lib:
     {
-        [r] /dev/urandom /dev/urandom
-    }
-
-    file:
-    {
-        /usr/lib/ssl/openssl.cnf    /usr/lib/ssl/
-        /usr/lib/libssl.so          /usr/lib/
-        /usr/lib/libssl.so.1.0.0    /usr/lib/
-        /lib/libcrypto.so           /lib/
-        /lib/libcrypto.so.1.0.0     /lib/
-        /lib/libnss_dns.so.2        /lib/
-        /lib/libnss_dns-2.20.so     /lib/
-        /lib/libresolv.so.2         /lib/
-        /lib/libresolv-2.20.so      /lib/
+        libpaho-mqtt3cs.so
+        libpaho-mqtt3cs.so.1
+        libpaho-mqtt3cs.so.1.0
     }
 }
 
 cflags:
 {
     -std=c99
-    -I${MANGOH_ROOT}/apps/MqttClient/paho.mqtt.c/src
+    -I${CURDIR}/../pahoLegatoComponent/paho.mqtt.c/src
 }
 
 ldflags:
 {
-    -L${MANGOH_ROOT}/apps/MqttClient/paho.mqtt.c/build/output
-    -lpaho-mqtt3cs
+    -L${MANGOH_ROOT}/apps/MqttClient/pahoLegatoComponent/paho.mqtt.c/build/output
 }
 
 provides:
