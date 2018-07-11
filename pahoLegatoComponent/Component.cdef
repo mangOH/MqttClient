@@ -12,15 +12,27 @@ requires:
 
     file:
     {
+#if ${MANGOH_CAN_9X15} = 1
+        // WP75, WP85 - Release 15
         /usr/lib/ssl/openssl.cnf    /usr/lib/ssl/
         /usr/lib/libssl.so          /usr/lib/
-        /usr/lib/libssl.so.1.0.0    /usr/lib/
-        /lib/libcrypto.so           /lib/
-        /lib/libcrypto.so.1.0.0     /lib/
+        /usr/lib/libssl.so.1.0.2    /usr/lib/
+        /usr/lib/libcrypto.so       /usr/lib/
+        /usr/lib/libcrypto.so.1.0.2 /usr/lib/
         /lib/libnss_dns.so.2        /lib/
         /lib/libnss_dns-2.20.so     /lib/
         /lib/libresolv.so.2         /lib/
         /lib/libresolv-2.20.so      /lib/
+#else
+        // WP76, WP77 - Release 9
+        /usr/lib/ssl/openssl.cnf    /usr/lib/ssl/
+        /usr/lib/libssl.so.1.0.2    /usr/lib/
+        /usr/lib/libcrypto.so.1.0.2 /usr/lib/
+        /lib/libnss_dns.so.2        /lib/
+        /lib/libnss_dns-2.24.so     /lib/
+        /lib/libresolv.so.2         /lib/
+        /lib/libresolv-2.24.so      /lib/
+#endif
     }
 }
 
