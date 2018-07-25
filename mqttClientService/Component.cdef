@@ -26,7 +26,7 @@ cflags:
 
 ldflags:
 {
-    -L${MANGOH_ROOT}/apps/MqttClient/pahoLegatoComponent/paho.mqtt.c/build/output
+    -L${CURDIR}/../pahoLegatoComponent/paho.mqtt.c/build/output_${LEGATO_TARGET}
 }
 
 provides:

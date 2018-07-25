@@ -12,7 +12,7 @@ requires:
 
     file:
     {
-#if ${MANGOH_CAN_9X15} = 1
+#if ${MANGOH_WP_CHIPSET_9X15} = 1
         // WP75, WP85 - Release 15
         /usr/lib/ssl/openssl.cnf    /usr/lib/ssl/
         /usr/lib/libssl.so          /usr/lib/
@@ -23,7 +23,7 @@ requires:
         /lib/libnss_dns-2.20.so     /lib/
         /lib/libresolv.so.2         /lib/
         /lib/libresolv-2.20.so      /lib/
-#else
+#elif ${MANGOH_WP_CHIPSET_9X07} = 1
         // WP76, WP77 - Release 9
         /usr/lib/ssl/openssl.cnf    /usr/lib/ssl/
         /usr/lib/libssl.so.1.0.2    /usr/lib/
@@ -40,14 +40,14 @@ bundles:
 {
     file:
     {
-        paho.mqtt.c/build/output/libpaho-mqtt3cs.so     /lib/
-        paho.mqtt.c/build/output/libpaho-mqtt3cs.so.1   /lib/
-        paho.mqtt.c/build/output/libpaho-mqtt3cs.so.1.0 /lib/
-        resolv.conf                                     /etc/
+        paho.mqtt.c/build/output_${LEGATO_TARGET}/libpaho-mqtt3cs.so     /lib/
+        paho.mqtt.c/build/output_${LEGATO_TARGET}/libpaho-mqtt3cs.so.1   /lib/
+        paho.mqtt.c/build/output_${LEGATO_TARGET}/libpaho-mqtt3cs.so.1.0 /lib/
+        resolv.conf                                                      /etc/
     }
 }
 
 externalBuild:
 {
-    "make -C ${CURDIR}/paho.mqtt.c"
+    "make -C ${CURDIR}/paho.mqtt.c blddir=build/output_${LEGATO_TARGET}"
 }
