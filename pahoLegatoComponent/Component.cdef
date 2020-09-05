@@ -29,9 +29,9 @@ requires:
         /usr/lib/libssl.so.1.0.2    /usr/lib/
         /usr/lib/libcrypto.so.1.0.2 /usr/lib/
         /lib/libnss_dns.so.2        /lib/
-        /lib/libnss_dns-2.24.so     /lib/
+        /lib/libnss_dns-2.27.so     /lib/
         /lib/libresolv.so.2         /lib/
-        /lib/libresolv-2.24.so      /lib/
+        /lib/libresolv-2.27.so      /lib/
 #endif
     }
 }
